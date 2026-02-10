@@ -1,197 +1,121 @@
 "use client";
 
-import React from "react"
-
-import { Badge } from "@/components/ui/badge";
+import { X, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Filter, TestTube, Building2, Stethoscope } from "lucide-react";
 
-interface FilterPanelProps {
-  parameters: string[];
-  drgs: string[];
-  fachabteilungen: string[];
-  activeParameters: string[];
-  activeDrgs: string[];
-  activeFachabteilungen: string[];
-  onToggleParameter: (p: string) => void;
-  onToggleDrg: (d: string) => void;
-  onToggleFachabteilung: (f: string) => void;
+interface ActiveFilter {
+  type: "parameter" | "drg" | "fachabteilung";
+  label: string;
+  value: string;
+}
+
+interface FilterBarProps {
+  activeParameter: string | null;
+  activeDrg: string | null;
+  activeFach: string | null;
+  onClearParameter: () => void;
+  onClearDrg: () => void;
+  onClearFach: () => void;
   onClearAll: () => void;
 }
 
-export default function FilterPanel({
-  parameters,
-  drgs,
-  fachabteilungen,
-  activeParameters,
-  activeDrgs,
-  activeFachabteilungen,
-  onToggleParameter,
-  onToggleDrg,
-  onToggleFachabteilung,
+const TYPE_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
+  parameter: {
+    bg: "bg-blue-500/10 border-blue-200",
+    text: "text-blue-700",
+    dot: "bg-blue-500",
+  },
+  drg: {
+    bg: "bg-amber-500/10 border-amber-200",
+    text: "text-amber-700",
+    dot: "bg-amber-500",
+  },
+  fachabteilung: {
+    bg: "bg-emerald-500/10 border-emerald-200",
+    text: "text-emerald-700",
+    dot: "bg-emerald-500",
+  },
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  parameter: "Parameter",
+  drg: "DRG",
+  fachabteilung: "Fachabteilung",
+};
+
+export default function FilterBar({
+  activeParameter,
+  activeDrg,
+  activeFach,
+  onClearParameter,
+  onClearDrg,
+  onClearFach,
   onClearAll,
-}: FilterPanelProps) {
-  const hasFilters =
-    activeParameters.length > 0 ||
-    activeDrgs.length > 0 ||
-    activeFachabteilungen.length > 0;
+}: FilterBarProps) {
+  const filters: ActiveFilter[] = [];
+  if (activeParameter)
+    filters.push({ type: "parameter", label: "Parameter", value: activeParameter });
+  if (activeDrg)
+    filters.push({ type: "drg", label: "DRG", value: activeDrg });
+  if (activeFach)
+    filters.push({ type: "fachabteilung", label: "Fachabteilung", value: activeFach });
+
+  if (filters.length === 0) return null;
+
+  const onClearMap: Record<string, () => void> = {
+    parameter: onClearParameter,
+    drg: onClearDrg,
+    fachabteilung: onClearFach,
+  };
 
   return (
-    <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="px-5 py-4 border-b flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold text-foreground">Filter</h3>
-          {hasFilters && (
-            <Badge variant="secondary" className="text-xs">
-              {activeParameters.length + activeDrgs.length + activeFachabteilungen.length}
-            </Badge>
-          )}
-        </div>
-        {hasFilters && (
+    <div className="flex items-center gap-3 bg-card border rounded-xl px-4 py-2.5 shadow-sm">
+      <div className="flex items-center gap-1.5 text-muted-foreground flex-shrink-0">
+        <Filter className="h-3.5 w-3.5" />
+        <span className="text-xs font-medium">Filter</span>
+      </div>
+
+      <div className="h-5 w-px bg-border" />
+
+      <div className="flex items-center gap-2 flex-wrap">
+        {filters.map((f) => {
+          const style = TYPE_STYLES[f.type];
+          return (
+            <span
+              key={f.type}
+              className={`inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-lg border text-xs font-medium ${style.bg} ${style.text}`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+              <span className="text-muted-foreground font-normal">
+                {TYPE_LABELS[f.type]}:
+              </span>
+              <span className="max-w-[200px] truncate">{f.value}</span>
+              <button
+                type="button"
+                onClick={onClearMap[f.type]}
+                className="ml-0.5 p-0.5 rounded hover:bg-foreground/10 cursor-pointer transition-colors"
+                aria-label={`Filter entfernen: ${f.value}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          );
+        })}
+      </div>
+
+      {filters.length > 1 && (
+        <>
+          <div className="h-5 w-px bg-border" />
           <Button
             variant="ghost"
             size="sm"
             onClick={onClearAll}
             className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground"
           >
-            Zurucksetzen
+            Alle entfernen
           </Button>
-        )}
-      </div>
-
-      {/* Active filters */}
-      {hasFilters && (
-        <div className="px-5 py-3 border-b bg-secondary/30">
-          <p className="text-xs text-muted-foreground mb-2">Aktive Filter</p>
-          <div className="flex flex-wrap gap-1.5">
-            {activeParameters.map((p) => (
-              <FilterChip key={`p-${p}`} label={p} color="blue" onRemove={() => onToggleParameter(p)} />
-            ))}
-            {activeDrgs.map((d) => (
-              <FilterChip key={`d-${d}`} label={d} color="amber" onRemove={() => onToggleDrg(d)} />
-            ))}
-            {activeFachabteilungen.map((f) => (
-              <FilterChip key={`f-${f}`} label={f} color="emerald" onRemove={() => onToggleFachabteilung(f)} />
-            ))}
-          </div>
-        </div>
+        </>
       )}
-
-      <ScrollArea className="max-h-[420px]">
-        <div className="p-5 space-y-5">
-          {/* Parameters */}
-          <FilterGroup
-            icon={<TestTube className="h-3.5 w-3.5" />}
-            title="Parameter"
-            items={parameters}
-            activeItems={activeParameters}
-            onToggle={onToggleParameter}
-            colorClass="bg-blue-500/10 text-blue-600 border-blue-200 hover:bg-blue-500/20"
-            activeColorClass="bg-blue-500 text-blue-50 border-blue-500 hover:bg-blue-600"
-          />
-
-          {/* DRGs */}
-          <FilterGroup
-            icon={<Building2 className="h-3.5 w-3.5" />}
-            title="DRG"
-            items={drgs}
-            activeItems={activeDrgs}
-            onToggle={onToggleDrg}
-            colorClass="bg-amber-500/10 text-amber-700 border-amber-200 hover:bg-amber-500/20"
-            activeColorClass="bg-amber-500 text-amber-50 border-amber-500 hover:bg-amber-600"
-          />
-
-          {/* Fachabteilungen */}
-          <FilterGroup
-            icon={<Stethoscope className="h-3.5 w-3.5" />}
-            title="Fachabteilung"
-            items={fachabteilungen}
-            activeItems={activeFachabteilungen}
-            onToggle={onToggleFachabteilung}
-            colorClass="bg-emerald-500/10 text-emerald-700 border-emerald-200 hover:bg-emerald-500/20"
-            activeColorClass="bg-emerald-500 text-emerald-50 border-emerald-500 hover:bg-emerald-600"
-          />
-        </div>
-      </ScrollArea>
     </div>
-  );
-}
-
-function FilterGroup({
-  icon,
-  title,
-  items,
-  activeItems,
-  onToggle,
-  colorClass,
-  activeColorClass,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  items: string[];
-  activeItems: string[];
-  onToggle: (item: string) => void;
-  colorClass: string;
-  activeColorClass: string;
-}) {
-  return (
-    <div>
-      <div className="flex items-center gap-1.5 mb-2">
-        {icon}
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          {title}
-        </span>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {items.map((item) => {
-          const isActive = activeItems.includes(item);
-          return (
-            <button
-              key={item}
-              type="button"
-              onClick={() => onToggle(item)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
-                isActive ? activeColorClass : colorClass
-              }`}
-            >
-              {item}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function FilterChip({
-  label,
-  color,
-  onRemove,
-}: {
-  label: string;
-  color: "blue" | "amber" | "emerald";
-  onRemove: () => void;
-}) {
-  const styles = {
-    blue: "bg-blue-100 text-blue-800",
-    amber: "bg-amber-100 text-amber-800",
-    emerald: "bg-emerald-100 text-emerald-800",
-  };
-
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${styles[color]}`}>
-      {label}
-      <button
-        type="button"
-        onClick={onRemove}
-        className="hover:opacity-70 cursor-pointer"
-        aria-label={`Filter entfernen: ${label}`}
-      >
-        <X className="h-3 w-3" />
-      </button>
-    </span>
   );
 }

@@ -19,8 +19,8 @@ interface Props {
   title: string;
   icon: React.ReactNode;
   items: TopItem[];
-  activeItems: string[];
-  onToggle: (name: string) => void;
+  activeItem: string | null;
+  onSelect: (name: string) => void;
   accentColor: string;
 }
 
@@ -28,8 +28,8 @@ export default function TopItemsTable({
   title,
   icon,
   items,
-  activeItems,
-  onToggle,
+  activeItem,
+  onSelect,
   accentColor,
 }: Props) {
   return (
@@ -38,6 +38,9 @@ export default function TopItemsTable({
       <div className="px-5 py-3.5 border-b flex items-center gap-2 flex-shrink-0">
         {icon}
         <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <span className="text-[10px] text-muted-foreground ml-auto">
+          Klicken zum Filtern
+        </span>
       </div>
 
       {/* Table */}
@@ -46,21 +49,27 @@ export default function TopItemsTable({
           <TableHeader className="sticky top-0 bg-card z-10">
             <TableRow>
               <TableHead className="text-xs px-4 py-2">Name</TableHead>
-              <TableHead className="text-xs px-3 py-2 text-right">Potenzial</TableHead>
-              <TableHead className="text-xs px-3 py-2 text-right">EUR</TableHead>
-              <TableHead className="text-xs px-3 py-2 text-right">Anteil</TableHead>
+              <TableHead className="text-xs px-3 py-2 text-right">
+                Potenzial
+              </TableHead>
+              <TableHead className="text-xs px-3 py-2 text-right">
+                EUR
+              </TableHead>
+              <TableHead className="text-xs px-3 py-2 text-right">
+                Anteil
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.map((item) => {
-              const isActive = activeItems.includes(item.name);
+              const isActive = activeItem === item.name;
               return (
                 <TableRow
                   key={item.name}
                   className={`cursor-pointer transition-colors hover:bg-muted/50 ${
                     isActive ? "bg-muted/70" : ""
                   }`}
-                  onClick={() => onToggle(item.name)}
+                  onClick={() => onSelect(item.name)}
                 >
                   <TableCell className="px-4 py-2.5 text-xs font-medium text-foreground max-w-[180px] truncate">
                     <div className="flex items-center gap-2">
