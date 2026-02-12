@@ -10,10 +10,6 @@ import {
   TrendingDown,
   TrendingUp,
   ArrowRight,
-  FlaskConical,
-  Beaker,
-  Users,
-  BarChart3,
 } from "lucide-react";
 import {
   Dialog,
@@ -82,7 +78,12 @@ const SUB_META = {
 } as const;
 
 type SubKey = keyof typeof SUB_META;
-const SUB_KEYS: SubKey[] = ["indikation", "multiCaseRate", "frequenz", "monitorZeit"];
+const SUB_KEYS: SubKey[] = [
+  "indikation",
+  "multiCaseRate",
+  "frequenz",
+  "monitorZeit",
+];
 
 interface Props {
   benchmark: AggregatedBenchmark;
@@ -99,224 +100,180 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
       ? (diff / benchmark.analysen_pro_fall_benchmark) * 100
       : 0;
   const isAbove = diff > 0;
-  const savingsQuote =
-    benchmark.total_analysen > 0
-      ? (benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100
-      : 0;
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider delayDuration={150}>
       <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-        {/* ── Compact top row: Title + Context ─────────────────────── */}
-        <div className="px-5 py-3 border-b flex items-center justify-between bg-secondary/30">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-primary/10">
-              <FlaskConical className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Benchmarking</p>
-              <p className="text-sm font-semibold text-foreground leading-tight">
-                {title}
-              </p>
-            </div>
-          </div>
-          <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-              isAbove
-                ? "bg-destructive/10 text-destructive"
-                : "bg-primary/10 text-primary"
-            }`}
-          >
-            {isAbove ? (
-              <TrendingUp className="h-3.5 w-3.5" />
-            ) : (
-              <TrendingDown className="h-3.5 w-3.5" />
-            )}
-            {isAbove ? "+" : ""}
-            {fmtPct(Math.abs(diffPct))} vs. Benchmark
-          </div>
-        </div>
-
-        {/* ── Main result row ──────────────────────────────────────── */}
-        <div className="px-5 py-5">
-          <div className="flex items-start gap-6 lg:gap-10 flex-wrap">
-            {/* Big EUR number */}
-            <div className="flex-shrink-0">
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
-                Netto-Potenzial
-              </p>
-              <p className="text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight leading-none">
+        {/* Single horizontal cockpit row */}
+        <div className="px-5 py-4 flex items-center gap-5 flex-wrap lg:flex-nowrap">
+          {/* ── LEFT: Main EUR result ──────────────────────── */}
+          <div className="flex-shrink-0 min-w-[180px]">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-0.5">
+              {title}
+            </p>
+            <div className="flex items-baseline gap-2">
+              <p className="text-3xl font-extrabold text-foreground tracking-tight leading-none tabular-nums">
                 {fmtInt(benchmark.hauptpot_net_euro)}
-                <span className="text-lg lg:text-xl font-semibold text-muted-foreground ml-1.5">
-                  EUR
-                </span>
               </p>
-              <p className="text-xs text-muted-foreground mt-1.5">
-                {fmtInt(benchmark.hauptpot_net_analysen)} einsparbare Analysen
-              </p>
+              <span className="text-sm font-semibold text-muted-foreground">
+                EUR
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-md ${
+                  isAbove
+                    ? "bg-destructive/10 text-destructive"
+                    : "bg-primary/10 text-primary"
+                }`}
+              >
+                {isAbove ? (
+                  <TrendingUp className="h-3 w-3" />
+                ) : (
+                  <TrendingDown className="h-3 w-3" />
+                )}
+                {isAbove ? "+" : ""}
+                {fmtPct(Math.abs(diffPct))}
+              </span>
             </div>
-
-            {/* Divider */}
-            <div className="hidden lg:block w-px h-20 bg-border self-center" />
-
-            {/* Analysen / Fall comparison */}
-            <div className="flex-shrink-0">
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
-                Analysen pro Fall
-              </p>
-              <div className="flex items-end gap-3">
-                <div>
-                  <p className="text-2xl font-bold text-foreground leading-none">
-                    {fmtDe(benchmark.analysen_pro_fall_kunde)}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Ihre Einrichtung
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground mb-2.5" />
-                <div>
-                  <p className="text-2xl font-bold text-primary leading-none">
-                    {fmtDe(benchmark.analysen_pro_fall_benchmark)}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    Benchmark
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="hidden lg:block w-px h-20 bg-border self-center" />
-
-            {/* Quick stats */}
-            <div className="flex gap-5 flex-wrap">
-              <QuickStat
-                icon={<Beaker className="h-3.5 w-3.5" />}
-                label="Analysen"
-                value={fmtInt(benchmark.total_analysen)}
-              />
-              <QuickStat
-                icon={<Users className="h-3.5 w-3.5" />}
-                label="Falle"
-                value={fmtInt(benchmark.total_faelle)}
-              />
-              <QuickStat
-                icon={<BarChart3 className="h-3.5 w-3.5" />}
-                label="Einsparquote"
-                value={fmtPct(savingsQuote)}
-                highlight
-              />
-            </div>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              {fmtInt(benchmark.hauptpot_net_analysen)} einsparbare Analysen
+            </p>
           </div>
 
-          {/* ── Sub-benchmark stacked bar ────────────────────────── */}
-          <div className="mt-5 pt-5 border-t">
-            <div className="flex items-center justify-between mb-2.5">
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
-                Potenzial-Hebel
-              </p>
-              <p className="text-[11px] text-muted-foreground">
-                Klicken fur Details
-              </p>
-            </div>
+          {/* ── Divider ────────────────────────────────────── */}
+          <div className="hidden lg:block w-px self-stretch bg-border" />
 
-            {/* Stacked horizontal bar */}
-            <div className="flex rounded-xl overflow-hidden h-10 bg-secondary cursor-pointer">
+          {/* ── CENTER: 4 clickable sub-benchmark tiles ───── */}
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+              Potenzial-Hebel
+            </p>
+            <div className="grid grid-cols-4 gap-2">
               {SUB_KEYS.map((key) => {
                 const sub = benchmark[key];
                 const meta = SUB_META[key];
-                if (sub.pct <= 0) return null;
-
+                const Icon = meta.icon;
                 return (
                   <Tooltip key={key}>
                     <TooltipTrigger asChild>
                       <button
                         type="button"
-                        className="relative h-full transition-all hover:brightness-110 hover:scale-y-105 origin-bottom focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        style={{
-                          width: `${sub.pct}%`,
-                          backgroundColor: meta.color,
-                          minWidth: sub.pct > 3 ? "auto" : "12px",
-                        }}
                         onClick={() => setOpenSub(key)}
-                        aria-label={`${meta.label}: ${fmtPct(sub.pct)}`}
+                        className="group relative rounded-xl border bg-card px-3 py-2.5 text-left transition-all hover:shadow-md hover:border-foreground/20 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
-                        {sub.pct > 10 && (
-                          <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-white drop-shadow-sm">
+                        {/* Colored top accent line */}
+                        <div
+                          className="absolute top-0 left-3 right-3 h-[2px] rounded-full"
+                          style={{ backgroundColor: meta.color }}
+                        />
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Icon
+                            className="h-3 w-3 flex-shrink-0"
+                            style={{ color: meta.color }}
+                          />
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            {meta.label}
+                          </span>
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                          <span
+                            className="text-lg font-bold leading-none tabular-nums"
+                            style={{ color: meta.color }}
+                          >
                             {fmtPct(sub.pct)}
                           </span>
-                        )}
+                        </div>
+                        {/* Mini progress bar */}
+                        <div className="mt-1.5 h-1 rounded-full bg-secondary overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.min(sub.pct, 100)}%`,
+                              backgroundColor: meta.color,
+                            }}
+                          />
+                        </div>
                       </button>
                     </TooltipTrigger>
                     <TooltipContent
-                      side="top"
-                      className="bg-card text-foreground border shadow-lg p-3 max-w-[220px]"
+                      side="bottom"
+                      className="bg-card text-foreground border shadow-lg p-3 max-w-[200px]"
                     >
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: meta.color }}
-                        />
-                        <span className="font-semibold text-sm">
-                          {meta.label}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-2">
+                      <p className="text-xs text-muted-foreground mb-1">
                         {meta.desc}
                       </p>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">Anteil</span>
-                        <span className="font-bold">{fmtPct(sub.pct)}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">
-                          Einsparbar
-                        </span>
-                        <span className="font-semibold">
-                          {fmtInt(sub.analysen)} Analysen
-                        </span>
-                      </div>
+                      <p className="text-xs font-semibold">
+                        {fmtInt(sub.analysen)} einsparbare Analysen
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        Klicken fur Details
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 );
               })}
             </div>
+          </div>
 
-            {/* Legend row */}
-            <div className="flex items-center gap-4 mt-2.5 flex-wrap">
-              {SUB_KEYS.map((key) => {
-                const sub = benchmark[key];
-                const meta = SUB_META[key];
-                if (sub.pct <= 0) return null;
-                const Icon = meta.icon;
+          {/* ── Divider ────────────────────────────────────── */}
+          <div className="hidden lg:block w-px self-stretch bg-border" />
 
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setOpenSub(key)}
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
-                  >
-                    <div
-                      className="h-2 w-2 rounded-full flex-shrink-0 group-hover:scale-125 transition-transform"
-                      style={{ backgroundColor: meta.color }}
-                    />
-                    <Icon className="h-3 w-3 opacity-50" />
-                    <span>
-                      {meta.label}{" "}
-                      <span className="font-semibold text-foreground">
-                        {fmtPct(sub.pct)}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
+          {/* ── RIGHT: Analysen/Fall comparison + stats ───── */}
+          <div className="flex-shrink-0 min-w-[200px]">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+              Analysen pro Fall
+            </p>
+            <div className="flex items-end gap-2.5">
+              <div>
+                <p className="text-xl font-bold text-foreground leading-none tabular-nums">
+                  {fmtDe(benchmark.analysen_pro_fall_kunde)}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Kunde
+                </p>
+              </div>
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground mb-2" />
+              <div>
+                <p className="text-xl font-bold text-primary leading-none tabular-nums">
+                  {fmtDe(benchmark.analysen_pro_fall_benchmark)}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Benchmark
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 mt-2.5 pt-2 border-t border-dashed">
+              <div>
+                <p className="text-[10px] text-muted-foreground">Analysen</p>
+                <p className="text-xs font-bold text-foreground tabular-nums">
+                  {fmtInt(benchmark.total_analysen)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground">Falle</p>
+                <p className="text-xs font-bold text-foreground tabular-nums">
+                  {fmtInt(benchmark.total_faelle)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground">
+                  Einsparquote
+                </p>
+                <p className="text-xs font-bold text-primary tabular-nums">
+                  {benchmark.total_analysen > 0
+                    ? fmtPct(
+                        (benchmark.hauptpot_net_analysen /
+                          benchmark.total_analysen) *
+                          100,
+                      )
+                    : "0%"}
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Detail Dialog ──────────────────────────────────────────── */}
+      {/* ── Detail Dialog ──────────────────────────────────── */}
       <Dialog
         open={openSub !== null}
         onOpenChange={(open) => {
@@ -334,36 +291,6 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
         </DialogContent>
       </Dialog>
     </TooltipProvider>
-  );
-}
-
-/* ── Quick stat chip ─────────────────────────────────────────────────────── */
-
-function QuickStat({
-  icon,
-  label,
-  value,
-  highlight,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="text-muted-foreground">{icon}</div>
-      <div>
-        <p className="text-[10px] text-muted-foreground leading-tight">
-          {label}
-        </p>
-        <p
-          className={`text-sm font-bold leading-tight ${highlight ? "text-primary" : "text-foreground"}`}
-        >
-          {value}
-        </p>
-      </div>
-    </div>
   );
 }
 
@@ -389,7 +316,6 @@ function SubBenchmarkDetail({
 
   const maxVal = Math.max(sub.kunde, sub.benchmark, 0.01);
 
-  // Navigate to adjacent sub-benchmark
   const currentIdx = SUB_KEYS.indexOf(subKey);
   const prevKey = currentIdx > 0 ? SUB_KEYS[currentIdx - 1] : null;
   const nextKey =
@@ -414,7 +340,6 @@ function SubBenchmarkDetail({
         </div>
       </DialogHeader>
 
-      {/* Explanation */}
       <p className="text-xs text-muted-foreground leading-relaxed -mt-1">
         {meta.longDesc}
       </p>
@@ -448,7 +373,6 @@ function SubBenchmarkDetail({
           Kunde vs. Benchmark
         </p>
 
-        {/* Kunde bar */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Ihre Einrichtung</span>
@@ -476,7 +400,6 @@ function SubBenchmarkDetail({
           </div>
         </div>
 
-        {/* Benchmark bar */}
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Benchmark</span>
@@ -494,7 +417,6 @@ function SubBenchmarkDetail({
           </div>
         </div>
 
-        {/* Interpretation */}
         <div
           className={`rounded-lg p-2.5 text-xs ${
             isWorse
@@ -525,6 +447,23 @@ function SubBenchmarkDetail({
         ) : (
           <div />
         )}
+        <div className="flex gap-1">
+          {SUB_KEYS.map((k) => (
+            <button
+              type="button"
+              key={k}
+              onClick={() => onNavigate(k)}
+              className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                k === subKey ? "w-4" : "w-1.5"
+              }`}
+              style={{
+                backgroundColor:
+                  k === subKey ? SUB_META[k].color : "hsl(var(--border))",
+              }}
+              aria-label={SUB_META[k].label}
+            />
+          ))}
+        </div>
         {nextKey ? (
           <button
             type="button"

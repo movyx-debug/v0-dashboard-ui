@@ -76,70 +76,56 @@ export default function DashboardPage() {
     if (activeFach) parts.push(activeFach);
     return parts.length > 0
       ? parts.join(" | ")
-      : "Gesamtpotenzial Ihrer Einrichtung";
+      : "Netto-Einsparpotenzial";
   }, [activeParam, activeDrg, activeFach]);
 
   const hasFilters = !!(activeParam || activeDrg || activeFach);
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Minimal header */}
       <header className="border-b bg-card">
-        <div className="mx-auto max-w-[1440px] px-5 py-3.5 flex items-center justify-between">
+        <div className="mx-auto max-w-[1440px] px-5 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <FlaskConical className="h-4 w-4 text-primary-foreground" />
+            <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
+              <FlaskConical className="h-3.5 w-3.5 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-base font-bold text-foreground tracking-tight leading-tight">
-                LabLense
-              </h1>
-              <p className="text-[10px] text-muted-foreground leading-tight">
-                Benchmarking Dashboard
-              </p>
-            </div>
+            <span className="text-sm font-bold text-foreground tracking-tight">
+              LabLense
+            </span>
+            <span className="text-xs text-muted-foreground hidden sm:inline">
+              Benchmarking
+            </span>
           </div>
-
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-2 bg-secondary px-3 py-1.5 rounded-lg">
-              <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">
-                Musterkrankenhaus
-              </span>
-              <span className="text-xs text-border">|</span>
-              <span className="text-xs font-semibold text-foreground">
-                2025
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1.5 rounded-lg text-[11px] font-medium">
-              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Benchmark aktiv
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              Musterkrankenhaus
+            </span>
+            <span className="text-[10px] text-muted-foreground">|</span>
+            <span className="text-xs font-semibold text-foreground">2025</span>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1440px] p-5 flex flex-col gap-5">
-        {/* Filter bar (compact, only when active) */}
-        {hasFilters && (
-          <FilterBar
-            activeParameter={activeParam}
-            activeDrg={activeDrg}
-            activeFach={activeFach}
-            onClearParameter={() => setActiveParam(null)}
-            onClearDrg={() => setActiveDrg(null)}
-            onClearFach={() => setActiveFach(null)}
-            onClearAll={onClearAll}
-          />
-        )}
-
-        {/* Sticky benchmark summary — stays visible while scrolling tables */}
-        <div className="sticky top-0 z-30">
+      <main className="mx-auto max-w-[1440px] p-5 flex flex-col gap-4">
+        {/* Sticky benchmark cockpit + filter bar */}
+        <div className="sticky top-0 z-30 flex flex-col gap-2 -mx-5 px-5 py-2 bg-background/80 backdrop-blur-md">
           <BenchmarkSection benchmark={benchmark} title={title} />
+          {hasFilters && (
+            <FilterBar
+              activeParameter={activeParam}
+              activeDrg={activeDrg}
+              activeFach={activeFach}
+              onClearParameter={() => setActiveParam(null)}
+              onClearDrg={() => setActiveDrg(null)}
+              onClearFach={() => setActiveFach(null)}
+              onClearAll={onClearAll}
+            />
+          )}
         </div>
 
-        {/* Top tables for filtering */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Top tables */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <TopItemsTable
             title="Top Parameter"
             icon={<TestTube className="h-4 w-4 text-blue-500" />}
