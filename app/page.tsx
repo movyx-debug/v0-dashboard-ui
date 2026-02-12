@@ -14,12 +14,10 @@ import TopItemsTable from "@/components/top-items-table";
 import { Building2, FlaskConical, Stethoscope, TestTube } from "lucide-react";
 
 export default function DashboardPage() {
-  // ── Single-select filter state ──────────────────────────────────────────
   const [activeParam, setActiveParam] = useState<string | null>(null);
   const [activeDrg, setActiveDrg] = useState<string | null>(null);
   const [activeFach, setActiveFach] = useState<string | null>(null);
 
-  // Clicking a table row sets the filter (or clears if same value clicked again)
   const onSelectParam = useCallback(
     (p: string) => setActiveParam((prev) => (prev === p ? null : p)),
     [],
@@ -39,7 +37,6 @@ export default function DashboardPage() {
     setActiveFach(null);
   }, []);
 
-  // ── Derived data ────────────────────────────────────────────────────────
   const filters = useMemo(
     () => ({
       parameters: activeParam ? [activeParam] : undefined,
@@ -54,7 +51,6 @@ export default function DashboardPage() {
     [filters],
   );
 
-  // Filter data for top tables
   const filteredData = useMemo(() => {
     let d = MOCK_DATA;
     if (activeParam) d = d.filter((r) => r.parameter_name === activeParam);
@@ -73,11 +69,10 @@ export default function DashboardPage() {
   );
   const topDrgs = useMemo(() => getTopDrgs(filteredData), [filteredData]);
 
-  // ── Title ───────────────────────────────────────────────────────────────
   const title = useMemo(() => {
     const parts: string[] = [];
     if (activeParam) parts.push(activeParam);
-    if (activeDrg) parts.push(`DRG: ${activeDrg}`);
+    if (activeDrg) parts.push(`DRG ${activeDrg}`);
     if (activeFach) parts.push(activeFach);
     return parts.length > 0
       ? parts.join(" | ")
@@ -88,45 +83,44 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ── Header ─────────────────────────────────────────────────────── */}
+      {/* Header */}
       <header className="border-b bg-card">
-        <div className="mx-auto max-w-[1600px] px-6 py-4 flex items-center justify-between">
+        <div className="mx-auto max-w-[1440px] px-5 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
-              <FlaskConical className="h-5 w-5 text-primary-foreground" />
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+              <FlaskConical className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground tracking-tight">
+              <h1 className="text-base font-bold text-foreground tracking-tight leading-tight">
                 LabLense
               </h1>
-              <p className="text-xs text-muted-foreground -mt-0.5">
+              <p className="text-[10px] text-muted-foreground leading-tight">
                 Benchmarking Dashboard
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-secondary px-4 py-2 rounded-xl">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              <div className="text-xs">
-                <span className="text-muted-foreground">
-                  Musterkrankenhaus
-                </span>
-                <span className="mx-2 text-border">|</span>
-                <span className="font-semibold text-foreground">2025</span>
-              </div>
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 bg-secondary px-3 py-1.5 rounded-lg">
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">
+                Musterkrankenhaus
+              </span>
+              <span className="text-xs text-border">|</span>
+              <span className="text-xs font-semibold text-foreground">
+                2025
+              </span>
             </div>
-            <div className="flex items-center gap-2 bg-primary/10 text-primary px-3 py-2 rounded-xl text-xs font-medium">
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+            <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1.5 rounded-lg text-[11px] font-medium">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               Benchmark aktiv
             </div>
           </div>
         </div>
       </header>
 
-      {/* ── Main Content (full-width, no sidebar) ──────────────────────── */}
-      <main className="mx-auto max-w-[1600px] p-6 space-y-6">
-        {/* Compact filter bar — only visible when filters active */}
+      <main className="mx-auto max-w-[1440px] p-5 flex flex-col gap-5">
+        {/* Filter bar (compact, only when active) */}
         {hasFilters && (
           <FilterBar
             activeParameter={activeParam}
@@ -139,11 +133,13 @@ export default function DashboardPage() {
           />
         )}
 
-        {/* Benchmark Section */}
-        <BenchmarkSection benchmark={benchmark} title={title} />
+        {/* Sticky benchmark summary — stays visible while scrolling tables */}
+        <div className="sticky top-0 z-30">
+          <BenchmarkSection benchmark={benchmark} title={title} />
+        </div>
 
-        {/* Top Tables — click a row to filter */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top tables for filtering */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <TopItemsTable
             title="Top Parameter"
             icon={<TestTube className="h-4 w-4 text-blue-500" />}
