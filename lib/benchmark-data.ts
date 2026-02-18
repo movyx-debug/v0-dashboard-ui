@@ -337,16 +337,36 @@ export interface TopItem {
   potentialEuro: number;
   currentAnalyses: number;
   share: number;
+  /** Sub-benchmark percentage shares (sum ~ 100) */
+  indikation_pct: number;
+  multiCaseRate_pct: number;
+  frequenz_pct: number;
+  monitorZeit_pct: number;
+}
+
+function computeSubPcts(pI: number, pM: number, pF: number, pS: number) {
+  const total = pI + pM + pF + pS;
+  if (total === 0) return { indikation_pct: 0, multiCaseRate_pct: 0, frequenz_pct: 0, monitorZeit_pct: 0 };
+  return {
+    indikation_pct: (pI / total) * 100,
+    multiCaseRate_pct: (pM / total) * 100,
+    frequenz_pct: (pF / total) * 100,
+    monitorZeit_pct: (pS / total) * 100,
+  };
 }
 
 export function getTopParameters(data: BenchmarkRow[], limit = 10): TopItem[] {
-  const map = new Map<string, { pot: number; total: number; preis: number; count: number }>();
+  const map = new Map<string, { pot: number; total: number; preis: number; count: number; pI: number; pM: number; pF: number; pS: number }>();
   for (const r of data) {
-    const prev = map.get(r.parameter_name) ?? { pot: 0, total: 0, preis: 0, count: 0 };
+    const prev = map.get(r.parameter_name) ?? { pot: 0, total: 0, preis: 0, count: 0, pI: 0, pM: 0, pF: 0, pS: 0 };
     prev.pot += r.hauptpot_net_analysen;
     prev.total += r.analysen;
     prev.preis += r.befundpreis;
     prev.count += 1;
+    prev.pI += r.pot_indikation_analysen;
+    prev.pM += r.pot_multiCaseRate_analysen;
+    prev.pF += r.pot_frequenz_analysen;
+    prev.pS += r.pot_spanDay_analysen;
     map.set(r.parameter_name, prev);
   }
   return [...map.entries()]
@@ -356,19 +376,24 @@ export function getTopParameters(data: BenchmarkRow[], limit = 10): TopItem[] {
       potentialEuro: v.pot * (v.preis / v.count),
       currentAnalyses: v.total,
       share: v.total > 0 ? v.pot / v.total : 0,
+      ...computeSubPcts(v.pI, v.pM, v.pF, v.pS),
     }))
     .sort((a, b) => b.potentialAnalyses - a.potentialAnalyses)
     .slice(0, limit);
 }
 
 export function getTopFachabteilungen(data: BenchmarkRow[], limit = 10): TopItem[] {
-  const map = new Map<string, { pot: number; total: number; preis: number; count: number }>();
+  const map = new Map<string, { pot: number; total: number; preis: number; count: number; pI: number; pM: number; pF: number; pS: number }>();
   for (const r of data) {
-    const prev = map.get(r.fachabteilung) ?? { pot: 0, total: 0, preis: 0, count: 0 };
+    const prev = map.get(r.fachabteilung) ?? { pot: 0, total: 0, preis: 0, count: 0, pI: 0, pM: 0, pF: 0, pS: 0 };
     prev.pot += r.hauptpot_net_analysen;
     prev.total += r.analysen;
     prev.preis += r.befundpreis;
     prev.count += 1;
+    prev.pI += r.pot_indikation_analysen;
+    prev.pM += r.pot_multiCaseRate_analysen;
+    prev.pF += r.pot_frequenz_analysen;
+    prev.pS += r.pot_spanDay_analysen;
     map.set(r.fachabteilung, prev);
   }
   return [...map.entries()]
@@ -378,19 +403,24 @@ export function getTopFachabteilungen(data: BenchmarkRow[], limit = 10): TopItem
       potentialEuro: v.pot * (v.preis / v.count),
       currentAnalyses: v.total,
       share: v.total > 0 ? v.pot / v.total : 0,
+      ...computeSubPcts(v.pI, v.pM, v.pF, v.pS),
     }))
     .sort((a, b) => b.potentialAnalyses - a.potentialAnalyses)
     .slice(0, limit);
 }
 
 export function getTopDrgs(data: BenchmarkRow[], limit = 10): TopItem[] {
-  const map = new Map<string, { pot: number; total: number; preis: number; count: number }>();
+  const map = new Map<string, { pot: number; total: number; preis: number; count: number; pI: number; pM: number; pF: number; pS: number }>();
   for (const r of data) {
-    const prev = map.get(r.drg) ?? { pot: 0, total: 0, preis: 0, count: 0 };
+    const prev = map.get(r.drg) ?? { pot: 0, total: 0, preis: 0, count: 0, pI: 0, pM: 0, pF: 0, pS: 0 };
     prev.pot += r.hauptpot_net_analysen;
     prev.total += r.analysen;
     prev.preis += r.befundpreis;
     prev.count += 1;
+    prev.pI += r.pot_indikation_analysen;
+    prev.pM += r.pot_multiCaseRate_analysen;
+    prev.pF += r.pot_frequenz_analysen;
+    prev.pS += r.pot_spanDay_analysen;
     map.set(r.drg, prev);
   }
   return [...map.entries()]
@@ -400,6 +430,7 @@ export function getTopDrgs(data: BenchmarkRow[], limit = 10): TopItem[] {
       potentialEuro: v.pot * (v.preis / v.count),
       currentAnalyses: v.total,
       share: v.total > 0 ? v.pot / v.total : 0,
+      ...computeSubPcts(v.pI, v.pM, v.pF, v.pS),
     }))
     .sort((a, b) => b.potentialAnalyses - a.potentialAnalyses)
     .slice(0, limit);
