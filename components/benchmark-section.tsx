@@ -37,8 +37,8 @@ const fmtInt = (n: number) => Math.round(n).toLocaleString("de-DE");
 
 const SUB_META = {
   indikation: {
-    color: "#3b82f6",
-    bgLight: "rgba(59,130,246,0.08)",
+    color: "#6889b1",
+    bgLight: "rgba(104,137,177,0.08)",
     icon: Activity,
     label: "Indikation",
     desc: "Wird der Parameter bei zu vielen Patienten angefordert?",
@@ -47,8 +47,8 @@ const SUB_META = {
     unit: "%",
   },
   multiCaseRate: {
-    color: "#f59e0b",
-    bgLight: "rgba(245,158,11,0.08)",
+    color: "#c4965a",
+    bgLight: "rgba(196,150,90,0.08)",
     icon: Repeat2,
     label: "MultiCaseRate",
     desc: "Gehen zu viele Falle ins Monitoring?",
@@ -57,8 +57,8 @@ const SUB_META = {
     unit: "%",
   },
   frequenz: {
-    color: "#10b981",
-    bgLight: "rgba(16,185,129,0.08)",
+    color: "#6fa782",
+    bgLight: "rgba(111,167,130,0.08)",
     icon: Clock,
     label: "Frequenz",
     desc: "Wird der Parameter zu haufig nachbestellt?",
@@ -67,8 +67,8 @@ const SUB_META = {
     unit: "Tage",
   },
   monitorZeit: {
-    color: "#8b5cf6",
-    bgLight: "rgba(139,92,246,0.08)",
+    color: "#9882b5",
+    bgLight: "rgba(152,130,181,0.08)",
     icon: Timer,
     label: "Monitorzeit",
     desc: "Dauert das Monitoring zu lange?",
@@ -91,7 +91,7 @@ interface Props {
   title: string;
 }
 
-const ORG_COLORS = ["#0ea5e9", "#f97316", "#a855f7"];
+const ORG_COLORS = ["#2d8a6e", "#5ab896", "#a3d9c4"];
 
 export default function BenchmarkSection({ benchmark, title }: Props) {
   const [openSub, setOpenSub] = useState<SubKey | null>(null);
