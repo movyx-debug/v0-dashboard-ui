@@ -242,54 +242,46 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Analysen pro Fall
             </p>
-            <div className="flex items-center gap-3">
-              {/* Kunde fraction: Analysen / Falle = A/F */}
-              <div className="text-center">
-                <p className="text-[10px] text-muted-foreground mb-0.5">Kunde</p>
-                <div className="flex items-center gap-1.5">
-                  <div className="text-right">
-                    <p className="text-[10px] text-muted-foreground/70 leading-tight tabular-nums">{fmtInt(benchmark.total_analysen)}</p>
-                    <div className="h-px bg-foreground/30 my-0.5" />
-                    <p className="text-[10px] text-muted-foreground/70 leading-tight tabular-nums">{fmtInt(benchmark.total_faelle)}</p>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground">=</span>
-                  <p className="text-lg font-bold text-foreground tabular-nums leading-none">
-                    {fmtDe(benchmark.analysen_pro_fall_kunde)}
-                  </p>
-                </div>
-              </div>
+            <div className="flex items-start gap-4">
+              {/* Grid table: rows = Analysen, Falle, A/F | cols = label, Kunde, Benchmark */}
+              <div className="grid grid-cols-[auto_auto_auto] gap-x-4 gap-y-0.5 items-baseline">
+                {/* Header row */}
+                <div />
+                <span className="text-[10px] text-muted-foreground text-right">Kunde</span>
+                <span className="text-[10px] text-muted-foreground text-right">Benchmark</span>
 
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                {/* Analysen */}
+                <span className="text-[10px] text-muted-foreground">Analysen</span>
+                <span className="text-[11px] tabular-nums text-foreground text-right">{fmtInt(benchmark.total_analysen)}</span>
+                <span className="text-[11px] tabular-nums text-primary/70 text-right">{fmtInt(Math.round(benchmark.benchmark_analysen))}</span>
 
-              {/* Benchmark fraction: Analysen / Falle = A/F */}
-              <div className="text-center">
-                <p className="text-[10px] text-muted-foreground mb-0.5">Benchmark</p>
-                <div className="flex items-center gap-1.5">
-                  <div className="text-right">
-                    <p className="text-[10px] text-muted-foreground/70 leading-tight tabular-nums">{fmtInt(Math.round(benchmark.benchmark_analysen))}</p>
-                    <div className="h-px bg-primary/40 my-0.5" />
-                    <p className="text-[10px] text-muted-foreground/70 leading-tight tabular-nums">{fmtInt(benchmark.total_faelle)}</p>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground">=</span>
-                  <p className="text-lg font-bold text-primary tabular-nums leading-none">
-                    {fmtDe(benchmark.analysen_pro_fall_benchmark)}
-                  </p>
-                </div>
+                {/* Falle */}
+                <span className="text-[10px] text-muted-foreground">Falle</span>
+                <span className="text-[11px] tabular-nums text-foreground text-right">{fmtInt(benchmark.total_faelle)}</span>
+                <span className="text-[11px] tabular-nums text-primary/70 text-right">{fmtInt(benchmark.total_faelle)}</span>
+
+                {/* Divider spanning all cols */}
+                <div className="col-span-3 border-t border-border my-0.5" />
+
+                {/* A/F big row */}
+                <span className="text-[10px] font-medium text-muted-foreground">A / F</span>
+                <span className="text-base font-bold tabular-nums text-foreground text-right">{fmtDe(benchmark.analysen_pro_fall_kunde)}</span>
+                <span className="text-base font-bold tabular-nums text-primary text-right">{fmtDe(benchmark.analysen_pro_fall_benchmark)}</span>
               </div>
 
               {/* Divider */}
-              <div className="h-8 w-px bg-border flex-shrink-0" />
+              <div className="h-14 w-px bg-border flex-shrink-0 mt-3" />
 
               {/* Einsparung */}
-              <div>
-                <p className="text-[10px] text-muted-foreground mb-0.5">Einsparung</p>
-                <p className="text-sm font-bold text-primary tabular-nums leading-none">
-                  {fmtInt(benchmark.hauptpot_net_analysen)}
+              <div className="mt-3">
+                <p className="text-[10px] text-muted-foreground">Einsparung</p>
+                <p className="text-sm font-bold text-primary tabular-nums leading-tight mt-0.5">
+                  {fmtInt(benchmark.hauptpot_net_analysen)} Analysen
                 </p>
                 <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
                   {benchmark.total_analysen > 0
                     ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100)
-                    : "0%"} der Analysen
+                    : "0%"} der Gesamtanalysen
                 </p>
               </div>
             </div>
