@@ -33,20 +33,16 @@ export default function FilterSearch({
   useEffect(() => {
     if (!query.trim()) {
       setDebouncedQuery("");
+      setOpen(false);
       return;
     }
-    const timer = setTimeout(() => setDebouncedQuery(query.trim()), 400);
+    const timer = setTimeout(() => {
+      const q = query.trim();
+      setDebouncedQuery(q);
+      if (q.length > 0) setOpen(true);
+    }, 400);
     return () => clearTimeout(timer);
   }, [query]);
-
-  // Open popover when we have debounced results
-  useEffect(() => {
-    if (debouncedQuery) {
-      setOpen(true);
-    } else {
-      setOpen(false);
-    }
-  }, [debouncedQuery]);
 
   // Compute matching values
   const results: SearchResults = (() => {
