@@ -238,71 +238,59 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
           {/* ── RIGHT: Analysen/Fall comparison + stats ───── */}
-          <div className="flex-shrink-0 min-w-[240px]">
+          <div className="flex-shrink-0">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Analysen pro Fall
             </p>
-            {/* A/F big numbers */}
-            <div className="flex items-end gap-2.5">
-              <div>
-                <p className="text-xl font-bold text-foreground leading-none tabular-nums">
-                  {fmtDe(benchmark.analysen_pro_fall_kunde)}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Kunde
-                </p>
+            <div className="flex items-center gap-3">
+              {/* Kunde fraction: Analysen / Falle = A/F */}
+              <div className="text-center">
+                <p className="text-[10px] text-muted-foreground mb-0.5">Kunde</p>
+                <div className="flex items-center gap-1.5">
+                  <div className="text-right">
+                    <p className="text-[10px] text-muted-foreground/70 leading-tight tabular-nums">{fmtInt(benchmark.total_analysen)}</p>
+                    <div className="h-px bg-foreground/30 my-0.5" />
+                    <p className="text-[10px] text-muted-foreground/70 leading-tight tabular-nums">{fmtInt(benchmark.total_faelle)}</p>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">=</span>
+                  <p className="text-lg font-bold text-foreground tabular-nums leading-none">
+                    {fmtDe(benchmark.analysen_pro_fall_kunde)}
+                  </p>
+                </div>
               </div>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground mb-2" />
-              <div>
-                <p className="text-xl font-bold text-primary leading-none tabular-nums">
-                  {fmtDe(benchmark.analysen_pro_fall_benchmark)}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Benchmark
-                </p>
+
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+
+              {/* Benchmark fraction: Analysen / Falle = A/F */}
+              <div className="text-center">
+                <p className="text-[10px] text-muted-foreground mb-0.5">Benchmark</p>
+                <div className="flex items-center gap-1.5">
+                  <div className="text-right">
+                    <p className="text-[10px] text-muted-foreground/70 leading-tight tabular-nums">{fmtInt(Math.round(benchmark.benchmark_analysen))}</p>
+                    <div className="h-px bg-primary/40 my-0.5" />
+                    <p className="text-[10px] text-muted-foreground/70 leading-tight tabular-nums">{fmtInt(benchmark.total_faelle)}</p>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground">=</span>
+                  <p className="text-lg font-bold text-primary tabular-nums leading-none">
+                    {fmtDe(benchmark.analysen_pro_fall_benchmark)}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* Composition table: Analysen / Falle = A/F */}
-            <div className="mt-2.5 pt-2 border-t border-dashed">
-              <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-1 items-center text-[11px]">
-                {/* Header */}
-                <div />
-                <span className="text-[10px] text-muted-foreground text-right">Kunde</span>
-                <span className="text-[10px] text-muted-foreground text-right">Benchmark</span>
+              {/* Divider */}
+              <div className="h-8 w-px bg-border flex-shrink-0" />
 
-                {/* Analysen row */}
-                <span className="text-muted-foreground">Analysen</span>
-                <span className="tabular-nums text-foreground font-semibold text-right">
-                  {fmtInt(benchmark.total_analysen)}
-                </span>
-                <span className="tabular-nums text-primary font-semibold text-right">
-                  {fmtInt(Math.round(benchmark.benchmark_analysen))}
-                </span>
-
-                {/* Falle row */}
-                <span className="text-muted-foreground">Falle</span>
-                <span className="tabular-nums text-foreground text-right">
-                  {fmtInt(benchmark.total_faelle)}
-                </span>
-                <span className="tabular-nums text-primary/70 text-right">
-                  {fmtInt(benchmark.total_faelle)}
-                </span>
-
-                {/* Einsparung row */}
-                <span className="text-muted-foreground">Einsparung</span>
-                <span className="tabular-nums text-primary font-bold text-right col-span-2">
+              {/* Einsparung */}
+              <div>
+                <p className="text-[10px] text-muted-foreground mb-0.5">Einsparung</p>
+                <p className="text-sm font-bold text-primary tabular-nums leading-none">
                   {fmtInt(benchmark.hauptpot_net_analysen)}
-                  <span className="text-muted-foreground font-normal ml-1">
-                    ({benchmark.total_analysen > 0
-                      ? fmtPct(
-                          (benchmark.hauptpot_net_analysen /
-                            benchmark.total_analysen) *
-                            100,
-                        )
-                      : "0%"})
-                  </span>
-                </span>
+                </p>
+                <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
+                  {benchmark.total_analysen > 0
+                    ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100)
+                    : "0%"} der Analysen
+                </p>
               </div>
             </div>
           </div>
