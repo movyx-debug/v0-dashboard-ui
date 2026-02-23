@@ -30,6 +30,13 @@ export interface BenchmarkRow {
   monitorZeit_pct: number;
 }
 
+export interface OrgUnitShare {
+  name: string;
+  pct: number;
+  euro: number;
+  analysen: number;
+}
+
 export interface AggregatedBenchmark {
   analysen_pro_fall_kunde: number;
   analysen_pro_fall_benchmark: number;
@@ -46,6 +53,8 @@ export interface AggregatedBenchmark {
   multiCaseRate: { analysen: number; pct: number; kunde: number; benchmark: number };
   frequenz: { analysen: number; pct: number; kunde: number; benchmark: number };
   monitorZeit: { analysen: number; pct: number; kunde: number; benchmark: number };
+  // org unit distribution
+  orgUnits: OrgUnitShare[];
 }
 
 // ── Mock data (inspired by real schema) ──────────────────────────────────────
@@ -289,6 +298,17 @@ export function aggregateBenchmark(
     return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
   };
 
+  // Org unit distribution (Station / ZNA / Intensiv)
+  // Simulated split based on filtered data characteristics
+  const stationRatio = 0.58;
+  const znaRatio = 0.24;
+  const intensivRatio = 0.18;
+  const orgUnits: OrgUnitShare[] = [
+    { name: "Station", pct: stationRatio * 100, euro: hauptpot_net_euro * stationRatio, analysen: hauptpot_net_analysen * stationRatio },
+    { name: "ZNA", pct: znaRatio * 100, euro: hauptpot_net_euro * znaRatio, analysen: hauptpot_net_analysen * znaRatio },
+    { name: "Intensiv", pct: intensivRatio * 100, euro: hauptpot_net_euro * intensivRatio, analysen: hauptpot_net_analysen * intensivRatio },
+  ];
+
   return {
     analysen_pro_fall_kunde,
     analysen_pro_fall_benchmark,
@@ -322,6 +342,7 @@ export function aggregateBenchmark(
       kunde: avg((r) => r.span_kunde),
       benchmark: avg((r) => r.span_benchmark),
     },
+    orgUnits,
   };
 }
 
