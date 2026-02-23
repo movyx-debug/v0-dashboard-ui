@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import type { AggregatedBenchmark } from "@/lib/benchmark-data";
 import {
   Activity,
@@ -296,21 +296,21 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
           {/* ── FAR RIGHT: Org Unit Donut ──────────────────── */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 w-fit">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Organisationseinheit
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {/* Donut */}
-              <div className="h-[90px] w-[90px] flex-shrink-0" key={donutKey}>
+              <div className="h-[85px] w-[85px] flex-shrink-0" key={donutKey}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={benchmark.orgUnits}
                       cx="50%"
                       cy="50%"
-                      innerRadius={26}
-                      outerRadius={40}
+                      innerRadius={24}
+                      outerRadius={38}
                       paddingAngle={3}
                       dataKey="pct"
                       nameKey="name"
@@ -326,22 +326,23 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              {/* Legend beside donut */}
-              <div className="space-y-2">
+              {/* Legend beside donut - grid for alignment */}
+              <div className="grid grid-cols-[auto_1fr_auto] gap-x-2 gap-y-1.5 items-center whitespace-nowrap">
                 {benchmark.orgUnits.map((ou, i) => (
-                  <div key={ou.name} className="flex items-center gap-2 whitespace-nowrap">
-                    <div
-                      className="h-2.5 w-2.5 rounded-sm flex-shrink-0"
-                      style={{ backgroundColor: ORG_COLORS[i] }}
-                    />
-                    <span className="text-[11px] text-muted-foreground">{ou.name}</span>
-                    <span className="text-[11px] font-semibold text-foreground tabular-nums">
-                      {fmtInt(Math.round(ou.euro))} EUR
+                  <React.Fragment key={ou.name}>
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="h-2 w-2 rounded-sm flex-shrink-0"
+                        style={{ backgroundColor: ORG_COLORS[i] }}
+                      />
+                      <span className="text-[11px] text-muted-foreground">{ou.name}</span>
+                    </div>
+                    <div />
+                    <span className="text-[11px] tabular-nums text-right">
+                      <span className="font-semibold text-foreground">{fmtInt(Math.round(ou.euro))} EUR</span>
+                      <span className="text-muted-foreground font-normal ml-1">({Math.round(ou.pct)}%)</span>
                     </span>
-                    <span className="text-[10px] text-muted-foreground tabular-nums">
-                      ({Math.round(ou.pct)}%)
-                    </span>
-                  </div>
+                  </React.Fragment>
                 ))}
               </div>
             </div>
