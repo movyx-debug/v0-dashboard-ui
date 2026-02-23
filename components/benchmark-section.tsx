@@ -37,8 +37,8 @@ const fmtInt = (n: number) => Math.round(n).toLocaleString("de-DE");
 
 const SUB_META = {
   indikation: {
-    color: "#6889b1",
-    bgLight: "rgba(104,137,177,0.08)",
+    color: "#5b8ab5",
+    bgLight: "rgba(91,138,181,0.08)",
     icon: Activity,
     label: "Indikation",
     desc: "Wird der Parameter bei zu vielen Patienten angefordert?",
@@ -47,8 +47,8 @@ const SUB_META = {
     unit: "%",
   },
   multiCaseRate: {
-    color: "#c4965a",
-    bgLight: "rgba(196,150,90,0.08)",
+    color: "#cb7b5a",
+    bgLight: "rgba(203,123,90,0.08)",
     icon: Repeat2,
     label: "MultiCaseRate",
     desc: "Gehen zu viele Falle ins Monitoring?",
@@ -57,8 +57,8 @@ const SUB_META = {
     unit: "%",
   },
   frequenz: {
-    color: "#6fa782",
-    bgLight: "rgba(111,167,130,0.08)",
+    color: "#4da8a0",
+    bgLight: "rgba(77,168,160,0.08)",
     icon: Clock,
     label: "Frequenz",
     desc: "Wird der Parameter zu haufig nachbestellt?",
@@ -67,8 +67,8 @@ const SUB_META = {
     unit: "Tage",
   },
   monitorZeit: {
-    color: "#9882b5",
-    bgLight: "rgba(152,130,181,0.08)",
+    color: "#c07a8e",
+    bgLight: "rgba(192,122,142,0.08)",
     icon: Timer,
     label: "Monitorzeit",
     desc: "Dauert das Monitoring zu lange?",
