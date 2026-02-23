@@ -296,13 +296,13 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
           {/* ── FAR RIGHT: Org Unit Donut ──────────────────── */}
-          <div className="flex-shrink-0 w-[160px]">
+          <div className="flex-shrink-0 w-[200px]">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-1 text-center">
               Organisationseinheit
             </p>
-            <div className="flex items-start gap-3">
-              {/* Donut */}
-              <div className="relative h-[80px] w-[80px] flex-shrink-0" key={donutKey}>
+            {/* Donut centered */}
+            <div className="flex justify-center" key={donutKey}>
+              <div className="relative h-[80px] w-[80px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -326,28 +326,24 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              {/* Legend: EUR absolute (%) */}
-              <div className="space-y-1.5 pt-0.5 min-w-0">
-                {benchmark.orgUnits.map((ou, i) => (
-                  <div key={ou.name} className="flex items-start gap-1.5">
-                    <div
-                      className="h-2 w-2 rounded-sm flex-shrink-0 mt-[3px]"
-                      style={{ backgroundColor: ORG_COLORS[i] }}
-                    />
-                    <div className="min-w-0">
-                      <p className="text-[10px] text-muted-foreground leading-none">
-                        {ou.name}
-                      </p>
-                      <p className="text-[11px] font-semibold text-foreground tabular-nums leading-tight">
-                        {fmtInt(Math.round(ou.euro))} EUR
-                        <span className="text-muted-foreground font-normal ml-0.5">
-                          ({Math.round(ou.pct)}%)
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            </div>
+            {/* Legend below donut */}
+            <div className="space-y-1 mt-2">
+              {benchmark.orgUnits.map((ou, i) => (
+                <div key={ou.name} className="flex items-center gap-1.5 whitespace-nowrap">
+                  <div
+                    className="h-2 w-2 rounded-sm flex-shrink-0"
+                    style={{ backgroundColor: ORG_COLORS[i] }}
+                  />
+                  <span className="text-[11px] text-muted-foreground">{ou.name}</span>
+                  <span className="text-[11px] font-semibold text-foreground tabular-nums ml-auto">
+                    {fmtInt(Math.round(ou.euro))} EUR
+                    <span className="text-muted-foreground font-normal ml-1">
+                      ({Math.round(ou.pct)}%)
+                    </span>
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
