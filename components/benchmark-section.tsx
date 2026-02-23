@@ -238,10 +238,11 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
           {/* ── RIGHT: Analysen/Fall comparison + stats ───── */}
-          <div className="flex-shrink-0 min-w-[200px]">
+          <div className="flex-shrink-0 min-w-[240px]">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Analysen pro Fall
             </p>
+            {/* A/F big numbers */}
             <div className="flex items-end gap-2.5">
               <div>
                 <p className="text-xl font-bold text-foreground leading-none tabular-nums">
@@ -261,16 +262,36 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-5 mt-2.5 pt-2 border-t border-dashed">
-              <div>
-                <p className="text-[10px] text-muted-foreground">Analysen</p>
-                <p className="text-xs font-bold text-foreground tabular-nums">
+
+            {/* Composition table: Analysen / Falle = A/F */}
+            <div className="mt-2.5 pt-2 border-t border-dashed">
+              <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-1 items-center text-[11px]">
+                {/* Header */}
+                <div />
+                <span className="text-[10px] text-muted-foreground text-right">Kunde</span>
+                <span className="text-[10px] text-muted-foreground text-right">Benchmark</span>
+
+                {/* Analysen row */}
+                <span className="text-muted-foreground">Analysen</span>
+                <span className="tabular-nums text-foreground font-semibold text-right">
                   {fmtInt(benchmark.total_analysen)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground">Einsparung</p>
-                <p className="text-xs font-bold text-primary tabular-nums">
+                </span>
+                <span className="tabular-nums text-primary font-semibold text-right">
+                  {fmtInt(Math.round(benchmark.benchmark_analysen))}
+                </span>
+
+                {/* Falle row */}
+                <span className="text-muted-foreground">Falle</span>
+                <span className="tabular-nums text-foreground text-right">
+                  {fmtInt(benchmark.total_faelle)}
+                </span>
+                <span className="tabular-nums text-primary/70 text-right">
+                  {fmtInt(benchmark.total_faelle)}
+                </span>
+
+                {/* Einsparung row */}
+                <span className="text-muted-foreground">Einsparung</span>
+                <span className="tabular-nums text-primary font-bold text-right col-span-2">
                   {fmtInt(benchmark.hauptpot_net_analysen)}
                   <span className="text-muted-foreground font-normal ml-1">
                     ({benchmark.total_analysen > 0
@@ -281,13 +302,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                         )
                       : "0%"})
                   </span>
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground">Falle</p>
-                <p className="text-xs font-bold text-foreground tabular-nums">
-                  {fmtInt(benchmark.total_faelle)}
-                </p>
+                </span>
               </div>
             </div>
           </div>

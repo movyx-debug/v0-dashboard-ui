@@ -48,6 +48,8 @@ export interface AggregatedBenchmark {
   erlosverlust_euro: number;
   total_analysen: number;
   total_faelle: number;
+  /** Benchmark-side analysen (faelle * a/f benchmark) */
+  benchmark_analysen: number;
   // sub-benchmarks
   indikation: { analysen: number; pct: number; kunde: number; benchmark: number };
   multiCaseRate: { analysen: number; pct: number; kunde: number; benchmark: number };
@@ -318,6 +320,7 @@ export function aggregateBenchmark(
     erlosverlust_euro,
     total_analysen,
     total_faelle,
+    benchmark_analysen: total_faelle * analysen_pro_fall_benchmark,
     indikation: {
       analysen: pot_indikation,
       pct: pot_total > 0 ? (pot_indikation / pot_total) * 100 : 0,
@@ -358,7 +361,7 @@ export function getUniqueFachabteilungen(data: BenchmarkRow[]): string[] {
   return [...new Set(data.map((r) => r.fachabteilung))];
 }
 
-// ── Top tables helper ────────────────────────────────────────────────────────
+// ── Top tables helper ─────────────────────────���──────────────────────────────
 
 export interface TopItem {
   name: string;
