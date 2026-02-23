@@ -13,13 +13,20 @@ import FilterBar from "@/components/filter-panel";
 import TopItemsTable from "@/components/top-items-table";
 import DetailTable from "@/components/detail-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Building2, FlaskConical, Stethoscope, TestTube, LayoutGrid, TableProperties } from "lucide-react";
+import { Building2, FlaskConical, Stethoscope, TestTube, LayoutGrid, TableProperties, FileDown, Loader2 } from "lucide-react";
 import SettingsPopover from "@/components/settings-popover";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   const [activeParam, setActiveParam] = useState<string | null>(null);
   const [activeDrg, setActiveDrg] = useState<string | null>(null);
   const [activeFach, setActiveFach] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = useCallback(() => {
+    setExporting(true);
+    setTimeout(() => setExporting(false), 2000);
+  }, []);
 
   const onSelectParam = useCallback(
     (p: string) => setActiveParam((prev) => (prev === p ? null : p)),
@@ -97,6 +104,20 @@ export default function DashboardPage() {
             <span className="text-[10px] text-muted-foreground">|</span>
             <span className="text-xs font-semibold text-foreground">2025</span>
             <SettingsPopover />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={handleExport}
+              disabled={exporting}
+            >
+              {exporting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <FileDown className="h-3.5 w-3.5" />
+              )}
+              {exporting ? "Wird erstellt..." : "Export Benchmark-Bericht"}
+            </Button>
           </div>
         </div>
       </header>
@@ -114,6 +135,10 @@ export default function DashboardPage() {
               onClearDrg={() => setActiveDrg(null)}
               onClearFach={() => setActiveFach(null)}
               onClearAll={onClearAll}
+              data={MOCK_DATA}
+              onSelectParam={onSelectParam}
+              onSelectDrg={onSelectDrg}
+              onSelectFach={onSelectFach}
             />
           </div>
         </div>
