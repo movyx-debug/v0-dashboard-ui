@@ -163,7 +163,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
           {/* ── CENTER: 4 clickable sub-benchmark tiles ───── */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 max-w-[420px]">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Potenzial-Hebel
             </p>
@@ -296,21 +296,21 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
           {/* ── FAR RIGHT: Org Unit Donut ──────────────────── */}
-          <div className="flex-shrink-0 w-[200px]">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-1 text-center">
+          <div className="flex-shrink-0">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Organisationseinheit
             </p>
-            {/* Donut centered */}
-            <div className="flex justify-center" key={donutKey}>
-              <div className="relative h-[80px] w-[80px]">
+            <div className="flex items-center gap-4">
+              {/* Donut */}
+              <div className="h-[90px] w-[90px] flex-shrink-0" key={donutKey}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={benchmark.orgUnits}
                       cx="50%"
                       cy="50%"
-                      innerRadius={24}
-                      outerRadius={36}
+                      innerRadius={26}
+                      outerRadius={40}
                       paddingAngle={3}
                       dataKey="pct"
                       nameKey="name"
@@ -326,24 +326,24 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-            </div>
-            {/* Legend below donut */}
-            <div className="space-y-1 mt-2">
-              {benchmark.orgUnits.map((ou, i) => (
-                <div key={ou.name} className="flex items-center gap-1.5 whitespace-nowrap">
-                  <div
-                    className="h-2 w-2 rounded-sm flex-shrink-0"
-                    style={{ backgroundColor: ORG_COLORS[i] }}
-                  />
-                  <span className="text-[11px] text-muted-foreground">{ou.name}</span>
-                  <span className="text-[11px] font-semibold text-foreground tabular-nums ml-auto">
-                    {fmtInt(Math.round(ou.euro))} EUR
-                    <span className="text-muted-foreground font-normal ml-1">
+              {/* Legend beside donut */}
+              <div className="space-y-2">
+                {benchmark.orgUnits.map((ou, i) => (
+                  <div key={ou.name} className="flex items-center gap-2 whitespace-nowrap">
+                    <div
+                      className="h-2.5 w-2.5 rounded-sm flex-shrink-0"
+                      style={{ backgroundColor: ORG_COLORS[i] }}
+                    />
+                    <span className="text-[11px] text-muted-foreground">{ou.name}</span>
+                    <span className="text-[11px] font-semibold text-foreground tabular-nums">
+                      {fmtInt(Math.round(ou.euro))} EUR
+                    </span>
+                    <span className="text-[10px] text-muted-foreground tabular-nums">
                       ({Math.round(ou.pct)}%)
                     </span>
-                  </span>
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
