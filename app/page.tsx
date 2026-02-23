@@ -14,6 +14,7 @@ import TopItemsTable from "@/components/top-items-table";
 import DetailTable from "@/components/detail-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Building2, FlaskConical, Stethoscope, TestTube, LayoutGrid, TableProperties } from "lucide-react";
+import SettingsPopover from "@/components/settings-popover";
 
 export default function DashboardPage() {
   const [activeParam, setActiveParam] = useState<string | null>(null);
@@ -91,10 +92,11 @@ export default function DashboardPage() {
             <span className="text-sm font-bold text-foreground tracking-tight">LabLense</span>
             <span className="text-xs text-muted-foreground hidden sm:inline">Benchmarking</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">Musterkrankenhaus</span>
             <span className="text-[10px] text-muted-foreground">|</span>
             <span className="text-xs font-semibold text-foreground">2025</span>
+            <SettingsPopover />
           </div>
         </div>
       </header>
