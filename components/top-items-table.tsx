@@ -39,11 +39,11 @@ function StackedBar({ item }: { item: TopItem }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex h-[7px] w-full rounded-full overflow-hidden bg-secondary cursor-default">
+        <div className="flex h-[9px] w-full rounded-full overflow-hidden bg-secondary cursor-default">
           {segments.map((seg) => (
             <div
               key={seg.key}
-              className="h-full transition-all duration-300 first:rounded-l-full last:rounded-r-full"
+              className="h-full transition-all duration-300 first:rounded-l-full last:rounded-r-full border-r border-white/80 last:border-r-0"
               style={{ width: `${seg.pct}%`, backgroundColor: seg.color }}
             />
           ))}
