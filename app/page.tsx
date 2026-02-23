@@ -13,7 +13,8 @@ import FilterBar from "@/components/filter-panel";
 import TopItemsTable from "@/components/top-items-table";
 import DetailTable from "@/components/detail-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Building2, FlaskConical, Stethoscope, TestTube, LayoutGrid, TableProperties, FileDown, Loader2 } from "lucide-react";
+import { Building2, FlaskConical, Stethoscope, TestTube, LayoutGrid, TableProperties, FileDown, Loader2, Search } from "lucide-react";
+import FilterSearch from "@/components/filter-search";
 import SettingsPopover from "@/components/settings-popover";
 import { Button } from "@/components/ui/button";
 
@@ -135,26 +136,30 @@ export default function DashboardPage() {
               onClearDrg={() => setActiveDrg(null)}
               onClearFach={() => setActiveFach(null)}
               onClearAll={onClearAll}
-              data={MOCK_DATA}
-              onSelectParam={onSelectParam}
-              onSelectDrg={onSelectDrg}
-              onSelectFach={onSelectFach}
             />
           </div>
         </div>
 
         {/* Tab views */}
         <Tabs defaultValue="top" className="w-full">
-          <TabsList className="bg-muted/50">
-            <TabsTrigger value="top" className="gap-1.5 text-xs">
-              <LayoutGrid className="h-3.5 w-3.5" />
-              Top-Ansicht
-            </TabsTrigger>
-            <TabsTrigger value="detail" className="gap-1.5 text-xs">
-              <TableProperties className="h-3.5 w-3.5" />
-              Detail-Ansicht
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between gap-4">
+            <TabsList className="bg-muted/50">
+              <TabsTrigger value="top" className="gap-1.5 text-xs">
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Top-Ansicht
+              </TabsTrigger>
+              <TabsTrigger value="detail" className="gap-1.5 text-xs">
+                <TableProperties className="h-3.5 w-3.5" />
+                Detail-Ansicht
+              </TabsTrigger>
+            </TabsList>
+            <FilterSearch
+              data={MOCK_DATA}
+              onSelectParam={onSelectParam}
+              onSelectDrg={onSelectDrg}
+              onSelectFach={onSelectFach}
+            />
+          </div>
 
           <TabsContent value="top">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

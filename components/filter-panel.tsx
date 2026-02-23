@@ -2,8 +2,6 @@
 
 import { X, Filter, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import FilterSearch from "@/components/filter-search";
-import type { BenchmarkRow } from "@/lib/benchmark-data";
 
 interface FilterBarProps {
   activeParameter: string | null;
@@ -13,10 +11,6 @@ interface FilterBarProps {
   onClearDrg: () => void;
   onClearFach: () => void;
   onClearAll: () => void;
-  data: BenchmarkRow[];
-  onSelectParam: (v: string) => void;
-  onSelectDrg: (v: string) => void;
-  onSelectFach: (v: string) => void;
 }
 
 const TYPE_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
@@ -51,10 +45,6 @@ export default function FilterBar({
   onClearDrg,
   onClearFach,
   onClearAll,
-  data,
-  onSelectParam,
-  onSelectDrg,
-  onSelectFach,
 }: FilterBarProps) {
   const hasFilters = !!(activeParameter || activeDrg || activeFach);
 
@@ -108,31 +98,13 @@ export default function FilterBar({
               </Button>
             )}
           </div>
-          <div className="ml-auto flex-shrink-0">
-            <FilterSearch
-              data={data}
-              onSelectParam={onSelectParam}
-              onSelectDrg={onSelectDrg}
-              onSelectFach={onSelectFach}
-            />
-          </div>
         </>
       ) : (
-        <div className="flex items-center gap-2.5 flex-1">
-          <div className="flex items-center gap-1.5 text-muted-foreground/50">
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            <span className="text-[11px]">
-              Klicken Sie auf eine Zeile oder suchen Sie
-            </span>
-          </div>
-          <div className="ml-auto flex-shrink-0">
-            <FilterSearch
-              data={data}
-              onSelectParam={onSelectParam}
-              onSelectDrg={onSelectDrg}
-              onSelectFach={onSelectFach}
-            />
-          </div>
+        <div className="flex items-center gap-1.5 text-muted-foreground/50">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          <span className="text-[11px]">
+            Klicken Sie auf eine Zeile oder suchen Sie, um zu filtern
+          </span>
         </div>
       )}
     </div>
