@@ -130,9 +130,7 @@ export default function TopItemsTable({
               <TableRow>
                 <TableHead className="text-xs px-4 py-2">Name</TableHead>
                 <TableHead className="text-xs px-2 py-2 text-right whitespace-nowrap">Pot. Analysen</TableHead>
-                <TableHead className="text-xs px-2 py-2 text-right whitespace-nowrap">Pot. EUR</TableHead>
-                <TableHead className="text-xs px-2 py-2 text-right whitespace-nowrap text-red-400">Erlosverluste</TableHead>
-                <TableHead className="text-xs px-2 py-2 text-right whitespace-nowrap font-semibold">Pot. EUR netto</TableHead>
+                <TableHead className="text-xs px-2 py-2 text-right whitespace-nowrap font-semibold">Pot. EUR</TableHead>
                 <TableHead className="text-xs px-3 py-2 text-center min-w-[100px]">Hebel</TableHead>
               </TableRow>
             </TableHeader>
@@ -160,15 +158,7 @@ export default function TopItemsTable({
                     <TableCell className="px-2 py-2.5 text-right text-xs tabular-nums text-muted-foreground">
                       {fmtInt(item.potentialAnalyses)}
                     </TableCell>
-                    {/* Pot. EUR (brutto) -- normal style */}
-                    <TableCell className="px-2 py-2.5 text-right text-xs tabular-nums text-muted-foreground">
-                      {fmtEur(item.bruttoEuro)}
-                    </TableCell>
-                    {/* Erlosverluste -- red tinted */}
-                    <TableCell className="px-2 py-2.5 text-right text-xs tabular-nums text-red-400">
-                      -{fmtEur(item.erlosverlustEuro)}
-                    </TableCell>
-                    {/* Pot. EUR netto -- bold black */}
+                    {/* Pot. EUR -- bold black */}
                     <TableCell className="px-2 py-2.5 text-right text-xs tabular-nums font-bold text-foreground">
                       {fmtEur(item.potentialEuro)}
                     </TableCell>
