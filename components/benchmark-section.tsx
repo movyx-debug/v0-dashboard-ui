@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { AggregatedBenchmark } from "@/lib/benchmark-data";
 import {
   Activity,
@@ -11,7 +11,7 @@ import {
   TrendingUp,
   ArrowRight,
 } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   Dialog,
   DialogContent,
@@ -95,7 +95,12 @@ const ORG_COLORS = ["#0ea5e9", "#f97316", "#a855f7"];
 
 export default function BenchmarkSection({ benchmark, title }: Props) {
   const [openSub, setOpenSub] = useState<SubKey | null>(null);
-  const [activeOrgIdx, setActiveOrgIdx] = useState<number | undefined>(undefined);
+
+  // Key for donut animation: changes whenever data changes, triggering re-mount
+  const donutKey = useMemo(
+    () => benchmark.orgUnits.map((o) => `${o.name}:${Math.round(o.euro)}`).join("|"),
+    [benchmark.orgUnits],
+  );
 
   const diff =
     benchmark.analysen_pro_fall_kunde - benchmark.analysen_pro_fall_benchmark;
@@ -151,106 +156,6 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                   -{fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR
                 </span>
               </div>
-            </div>
-          </div>
-
-          {/* ── Divider ────────────────────────────────────── */}
-          <div className="hidden lg:block w-px self-stretch bg-border" />
-
-          {/* ── ORG UNIT DONUT ─────────────────────────────── */}
-          <div className="flex-shrink-0 w-[150px]">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-1 text-center">
-              Organisationseinheit
-            </p>
-            <div className="relative h-[100px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={benchmark.orgUnits}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={28}
-                    outerRadius={42}
-                    paddingAngle={3}
-                    dataKey="pct"
-                    nameKey="name"
-                    activeIndex={activeOrgIdx}
-                    activeShape={(props: Record<string, unknown>) => {
-                      const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props as {
-                        cx: number; cy: number; innerRadius: number; outerRadius: number;
-                        startAngle: number; endAngle: number; fill: string;
-                      };
-                      return (
-                        <Sector
-                          cx={cx}
-                          cy={cy}
-                          innerRadius={(innerRadius as number) - 2}
-                          outerRadius={(outerRadius as number) + 4}
-                          startAngle={startAngle}
-                          endAngle={endAngle}
-                          fill={fill}
-                          stroke="none"
-                        />
-                      );
-                    }}
-                    onMouseEnter={(_, idx) => setActiveOrgIdx(idx)}
-                    onMouseLeave={() => setActiveOrgIdx(undefined)}
-                    stroke="none"
-                  >
-                    {benchmark.orgUnits.map((_, i) => (
-                      <Cell key={i} fill={ORG_COLORS[i % ORG_COLORS.length]} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              {/* Center label when hovering */}
-              {activeOrgIdx !== undefined && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center">
-                    <p className="text-[10px] font-bold text-foreground leading-none">
-                      {Math.round(benchmark.orgUnits[activeOrgIdx].pct)}%
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-            {/* Legend + hover details */}
-            <div className="space-y-0.5 mt-1">
-              {benchmark.orgUnits.map((ou, i) => (
-                <div
-                  key={ou.name}
-                  className="group flex items-center gap-1.5 text-[10px] cursor-default relative"
-                  onMouseEnter={() => setActiveOrgIdx(i)}
-                  onMouseLeave={() => setActiveOrgIdx(undefined)}
-                >
-                  <div
-                    className="h-2 w-2 rounded-sm flex-shrink-0"
-                    style={{ backgroundColor: ORG_COLORS[i] }}
-                  />
-                  <span className="text-muted-foreground truncate flex-1">
-                    {ou.name}
-                  </span>
-                  <span className="tabular-nums text-foreground font-medium">
-                    {Math.round(ou.pct)}%
-                  </span>
-                  {/* Hover popup */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50">
-                    <div className="bg-card border rounded-lg shadow-lg p-2.5 whitespace-nowrap">
-                      <p className="text-[11px] font-semibold text-foreground mb-1">{ou.name}</p>
-                      <div className="space-y-0.5 text-[10px]">
-                        <div className="flex justify-between gap-4">
-                          <span className="text-muted-foreground">Pot. EUR</span>
-                          <span className="font-medium tabular-nums">{Math.round(ou.euro).toLocaleString("de-DE")} EUR</span>
-                        </div>
-                        <div className="flex justify-between gap-4">
-                          <span className="text-muted-foreground">Einsparung</span>
-                          <span className="font-medium tabular-nums">{Math.round(ou.analysen).toLocaleString("de-DE")} Analysen</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
 
@@ -383,6 +288,65 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 <p className="text-xs font-bold text-foreground tabular-nums">
                   {fmtInt(benchmark.total_faelle)}
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Divider ────────────────────────────────────── */}
+          <div className="hidden lg:block w-px self-stretch bg-border" />
+
+          {/* ── FAR RIGHT: Org Unit Donut ──────────────────── */}
+          <div className="flex-shrink-0 w-[160px]">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-1 text-center">
+              Organisationseinheit
+            </p>
+            <div className="flex items-start gap-3">
+              {/* Donut */}
+              <div className="relative h-[80px] w-[80px] flex-shrink-0" key={donutKey}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={benchmark.orgUnits}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={24}
+                      outerRadius={36}
+                      paddingAngle={3}
+                      dataKey="pct"
+                      nameKey="name"
+                      stroke="none"
+                      animationBegin={0}
+                      animationDuration={600}
+                      animationEasing="ease-out"
+                    >
+                      {benchmark.orgUnits.map((_, i) => (
+                        <Cell key={i} fill={ORG_COLORS[i % ORG_COLORS.length]} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Legend: EUR absolute (%) */}
+              <div className="space-y-1.5 pt-0.5 min-w-0">
+                {benchmark.orgUnits.map((ou, i) => (
+                  <div key={ou.name} className="flex items-start gap-1.5">
+                    <div
+                      className="h-2 w-2 rounded-sm flex-shrink-0 mt-[3px]"
+                      style={{ backgroundColor: ORG_COLORS[i] }}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-muted-foreground leading-none">
+                        {ou.name}
+                      </p>
+                      <p className="text-[11px] font-semibold text-foreground tabular-nums leading-tight">
+                        {fmtInt(Math.round(ou.euro))} EUR
+                        <span className="text-muted-foreground font-normal ml-0.5">
+                          ({Math.round(ou.pct)}%)
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
