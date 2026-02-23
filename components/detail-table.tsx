@@ -25,6 +25,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Minus,
+  Equal,
 } from "lucide-react";
 
 /* ── Formatters ─────────────────────────────────────────────── */
@@ -36,8 +38,10 @@ const fmtDe = (n: number | null, dec = 2) =>
         maximumFractionDigits: dec,
       });
 const fmtInt = (n: number) => Math.round(n).toLocaleString("de-DE");
+const fmtEur = (n: number) =>
+  `${Math.round(n).toLocaleString("de-DE")} \u20AC`;
 
-/* ── Sub-benchmark meta (colors match BenchmarkSection) ──────── */
+/* ── Sub-benchmark meta ──────────────────────────────────────── */
 const SUB_COLORS = {
   indikation: { color: "#3b82f6", label: "Indikation", unit: "%" },
   multiCaseRate: { color: "#f59e0b", label: "MultiCaseRate", unit: "%" },
@@ -46,7 +50,12 @@ const SUB_COLORS = {
 } as const;
 
 type SubKey = keyof typeof SUB_COLORS;
-const SUB_KEYS: SubKey[] = ["indikation", "multiCaseRate", "frequenz", "monitorZeit"];
+const SUB_KEYS: SubKey[] = [
+  "indikation",
+  "multiCaseRate",
+  "frequenz",
+  "monitorZeit",
+];
 
 /* ── Sorting ─────────────────────────────────────────────────── */
 type SortField =
@@ -73,21 +82,27 @@ interface Props {
   onSelectFach: (name: string) => void;
 }
 
-/* ── Helper to get sub-benchmark kunde/benchmark from row ──── */
+/* ── Helper: sub-benchmark kunde/benchmark from row ──────── */
 function getSubValues(
   row: BenchmarkRow,
   key: SubKey
 ): { kunde: number | null; benchmark: number } {
   switch (key) {
     case "indikation":
-      return { kunde: row.indikationsquote_kunde, benchmark: row.indikationsquote_benchmark };
+      return {
+        kunde: row.indikationsquote_kunde,
+        benchmark: row.indikationsquote_benchmark,
+      };
     case "multiCaseRate":
       return {
         kunde: row.multiCaseRate !== null ? row.multiCaseRate * 100 : null,
         benchmark: row.multiCaseRate_benchmark * 100,
       };
     case "frequenz":
-      return { kunde: row.frequenz_tage_kunde, benchmark: row.frequenz_tage_benchmark };
+      return {
+        kunde: row.frequenz_tage_kunde,
+        benchmark: row.frequenz_tage_benchmark,
+      };
     case "monitorZeit":
       return { kunde: row.span_kunde, benchmark: row.span_benchmark };
   }
@@ -116,7 +131,10 @@ function SubBar({ row, subKey }: { row: BenchmarkRow; subKey: SubKey }) {
           </div>
           <span
             className="text-[10px] tabular-nums font-medium w-[28px] text-right"
-            style={{ color: pct > 0 ? meta.color : "hsl(var(--muted-foreground))" }}
+            style={{
+              color:
+                pct > 0 ? meta.color : "hsl(var(--muted-foreground))",
+            }}
           >
             {Math.round(pct)}%
           </span>
@@ -147,7 +165,77 @@ function SubBar({ row, subKey }: { row: BenchmarkRow; subKey: SubKey }) {
           </span>
         </div>
         <div className="mt-1.5 pt-1.5 border-t text-[10px] text-muted-foreground">
-          Anteil am Potenzial: <span className="font-semibold" style={{ color: meta.color }}>{Math.round(pct)}%</span>
+          Anteil am Potenzial:{" "}
+          <span className="font-semibold" style={{ color: meta.color }}>
+            {Math.round(pct)}%
+          </span>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+/* ── Potenzial breakdown tooltip (row-level) ─────────────────── */
+function PotCellTooltip({
+  row,
+  mode,
+  children,
+}: {
+  row: BenchmarkRow & { hauptpot_net_euro: number };
+  mode: "analysen" | "euro";
+  children: React.ReactNode;
+}) {
+  const isEuro = mode === "euro";
+  const netto = isEuro
+    ? row.hauptpot_net_euro
+    : row.hauptpot_net_analysen;
+  const brutto = netto * 1.35;
+  const verlust = brutto - netto;
+  const fmt = isEuro ? fmtEur : fmtInt;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="bg-card text-foreground border shadow-lg px-4 py-3 min-w-[200px]"
+      >
+        <p className="text-[10px] text-muted-foreground mb-2.5 font-medium uppercase tracking-wider">
+          Zusammensetzung {isEuro ? "(EUR)" : "(Analysen)"}
+        </p>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-[11px] text-foreground">
+              Einsparung durch Reduktion
+            </span>
+            <span className="text-[12px] font-bold tabular-nums text-emerald-600">
+              {fmt(brutto)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Minus className="h-3 w-3 text-muted-foreground" />
+            <div className="flex-1 border-t border-dashed border-muted-foreground/30" />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-[11px] text-foreground">
+              Erlosverluste durch Reduktion
+            </span>
+            <span className="text-[12px] font-bold tabular-nums text-red-500">
+              {fmt(verlust)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Equal className="h-3 w-3 text-muted-foreground" />
+            <div className="flex-1 border-t border-muted-foreground/40" />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-[11px] font-semibold text-foreground">
+              Netto-Potenzial
+            </span>
+            <span className="text-[13px] font-extrabold tabular-nums text-primary">
+              {fmt(netto)}
+            </span>
+          </div>
         </div>
       </TooltipContent>
     </Tooltip>
@@ -161,11 +249,11 @@ export default function DetailTable({
   onSelectDrg,
   onSelectFach,
 }: Props) {
-  const [sortField, setSortField] = useState<SortField>("hauptpot_net_analysen");
+  const [sortField, setSortField] =
+    useState<SortField>("hauptpot_net_analysen");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [page, setPage] = useState(0);
 
-  // Compute euro per row
   const enriched = useMemo(
     () =>
       data.map((r) => ({
@@ -184,7 +272,9 @@ export default function DetailTable({
       if (av === null) return 1;
       if (bv === null) return -1;
       if (typeof av === "string" && typeof bv === "string") {
-        return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+        return sortDir === "asc"
+          ? av.localeCompare(bv)
+          : bv.localeCompare(av);
       }
       return sortDir === "asc"
         ? (av as number) - (bv as number)
@@ -193,8 +283,14 @@ export default function DetailTable({
     return copy;
   }, [enriched, sortField, sortDir]);
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / ITEMS_PER_PAGE));
-  const pageData = sorted.slice(page * ITEMS_PER_PAGE, (page + 1) * ITEMS_PER_PAGE);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sorted.length / ITEMS_PER_PAGE)
+  );
+  const pageData = sorted.slice(
+    page * ITEMS_PER_PAGE,
+    (page + 1) * ITEMS_PER_PAGE
+  );
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -207,7 +303,10 @@ export default function DetailTable({
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 opacity-30 ml-0.5 inline" />;
+    if (sortField !== field)
+      return (
+        <ArrowUpDown className="h-3 w-3 opacity-30 ml-0.5 inline" />
+      );
     return sortDir === "asc" ? (
       <ArrowUp className="h-3 w-3 text-primary ml-0.5 inline" />
     ) : (
@@ -232,7 +331,11 @@ export default function DetailTable({
       } ${className}`}
       onClick={() => toggleSort(field)}
     >
-      <span className={`inline-flex items-center gap-0.5 ${align === "left" ? "" : "justify-end"}`}>
+      <span
+        className={`inline-flex items-center gap-0.5 ${
+          align === "left" ? "" : "justify-end"
+        }`}
+      >
         {label}
         <SortIcon field={field} />
       </span>
@@ -242,31 +345,58 @@ export default function DetailTable({
   return (
     <TooltipProvider delayDuration={100}>
       <div className="bg-card border rounded-2xl shadow-sm overflow-hidden flex flex-col">
-        {/* Table scroll container */}
-        <div className="overflow-auto flex-1" style={{ maxHeight: "calc(100vh - 280px)" }}>
+        <div
+          className="overflow-auto flex-1"
+          style={{ maxHeight: "calc(100vh - 280px)" }}
+        >
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
-                <HeadCell field="parameter_name" label="Parameter" align="left" />
+                <HeadCell
+                  field="parameter_name"
+                  label="Parameter"
+                  align="left"
+                />
                 <HeadCell field="drg" label="DRG" align="left" />
-                <HeadCell field="fachabteilung" label="Fachabteilung" align="left" />
-                <HeadCell field="analysen_pro_fall_kunde" label="A/F Kunde" />
-                <HeadCell field="analysen_pro_fall_benchmark" label="A/F Benchmark" />
-                <HeadCell field="hauptpot_net_analysen" label="Pot. Analysen" />
-                <HeadCell field="hauptpot_net_euro" label="Pot. EUR" />
-                {/* Sub-benchmark % columns with colored header dots */}
+                <HeadCell
+                  field="fachabteilung"
+                  label="Fachabteilung"
+                  align="left"
+                />
+                <HeadCell
+                  field="analysen_pro_fall_kunde"
+                  label="A/F Kunde"
+                />
+                <HeadCell
+                  field="analysen_pro_fall_benchmark"
+                  label="A/F Benchmark"
+                />
+                <HeadCell
+                  field="hauptpot_net_analysen"
+                  label="Pot. Analysen"
+                />
+                <HeadCell
+                  field="hauptpot_net_euro"
+                  label="Pot. EUR"
+                />
                 {SUB_KEYS.map((key) => (
                   <TableHead
                     key={key}
                     className="text-[10px] font-medium px-2 py-2 whitespace-nowrap cursor-pointer hover:bg-muted/50 transition-colors select-none text-center min-w-[85px]"
-                    onClick={() => toggleSort(`${key}_pct` as SortField)}
+                    onClick={() =>
+                      toggleSort(`${key}_pct` as SortField)
+                    }
                   >
                     <span className="inline-flex items-center gap-1 justify-center">
                       <span
                         className="h-2 w-2 rounded-full inline-block flex-shrink-0"
-                        style={{ backgroundColor: SUB_COLORS[key].color }}
+                        style={{
+                          backgroundColor: SUB_COLORS[key].color,
+                        }}
                       />
-                      <span className="truncate">{SUB_COLORS[key].label}</span>
+                      <span className="truncate">
+                        {SUB_COLORS[key].label}
+                      </span>
                       <SortIcon field={`${key}_pct` as SortField} />
                     </span>
                   </TableHead>
@@ -279,7 +409,6 @@ export default function DetailTable({
                   key={`${row.parameter_name}-${row.drg}-${row.fachabteilung}-${idx}`}
                   className="hover:bg-muted/30"
                 >
-                  {/* Parameter */}
                   <TableCell
                     className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap max-w-[180px] truncate"
                     onClick={() => onSelectParam(row.parameter_name)}
@@ -287,14 +416,12 @@ export default function DetailTable({
                   >
                     {row.parameter_name}
                   </TableCell>
-                  {/* DRG */}
                   <TableCell
                     className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap"
                     onClick={() => onSelectDrg(row.drg)}
                   >
                     {row.drg}
                   </TableCell>
-                  {/* Fachabteilung */}
                   <TableCell
                     className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap max-w-[140px] truncate"
                     onClick={() => onSelectFach(row.fachabteilung)}
@@ -302,23 +429,29 @@ export default function DetailTable({
                   >
                     {row.fachabteilung}
                   </TableCell>
-                  {/* A/F Kunde */}
                   <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
                     {fmtDe(row.analysen_pro_fall_kunde)}
                   </TableCell>
-                  {/* A/F Benchmark */}
                   <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
                     {fmtDe(row.analysen_pro_fall_benchmark)}
                   </TableCell>
-                  {/* Potenzial Analysen */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums font-semibold text-foreground whitespace-nowrap">
-                    {fmtDe(row.hauptpot_net_analysen, 0)}
+                  {/* Pot. Analysen with hover breakdown */}
+                  <TableCell className="px-2.5 py-2 text-[11px] text-right">
+                    <PotCellTooltip row={row} mode="analysen">
+                      <span className="font-semibold tabular-nums text-foreground cursor-default border-b border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
+                        {fmtDe(row.hauptpot_net_analysen, 0)}
+                      </span>
+                    </PotCellTooltip>
                   </TableCell>
-                  {/* Potenzial EUR */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums font-semibold text-foreground whitespace-nowrap">
-                    {fmtDe(row.hauptpot_net_euro, 0)} {"EUR"}
+                  {/* Pot. EUR with hover breakdown */}
+                  <TableCell className="px-2.5 py-2 text-[11px] text-right">
+                    <PotCellTooltip row={row} mode="euro">
+                      <span className="tabular-nums text-foreground cursor-default border-b border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
+                        {fmtDe(row.hauptpot_net_euro, 0)}{" "}
+                        {"EUR"}
+                      </span>
+                    </PotCellTooltip>
                   </TableCell>
-                  {/* Sub-benchmark bars */}
                   {SUB_KEYS.map((key) => (
                     <TableCell key={key} className="px-2 py-2">
                       <SubBar row={row} subKey={key} />
@@ -336,25 +469,56 @@ export default function DetailTable({
             {fmtInt(sorted.length)} Zeilen
             {sorted.length > ITEMS_PER_PAGE && (
               <span>
-                {" "}&middot; Seite {page + 1} von {totalPages}
+                {" "}
+                &middot; Seite {page + 1} von {totalPages}
               </span>
             )}
           </p>
           {totalPages > 1 && (
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPage(0)} disabled={page === 0}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() => setPage(0)}
+                disabled={page === 0}
+              >
                 <ChevronsLeft className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() =>
+                  setPage((p) => Math.max(0, p - 1))
+                }
+                disabled={page === 0}
+              >
                 <ChevronLeft className="h-3.5 w-3.5" />
               </Button>
               <span className="text-[11px] text-muted-foreground px-2 tabular-nums">
                 {page + 1} / {totalPages}
               </span>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() =>
+                  setPage((p) =>
+                    Math.min(totalPages - 1, p + 1)
+                  )
+                }
+                disabled={page >= totalPages - 1}
+              >
                 <ChevronRight className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() => setPage(totalPages - 1)}
+                disabled={page >= totalPages - 1}
+              >
                 <ChevronsRight className="h-3.5 w-3.5" />
               </Button>
             </div>

@@ -15,18 +15,94 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ArrowDown, Minus, Equal } from "lucide-react";
 import type React from "react";
 
 const fmtInt = (n: number) => Math.round(n).toLocaleString("de-DE");
-const fmtEur = (n: number) => `${Math.round(n).toLocaleString("de-DE")} \u20AC`;
+const fmtEur = (n: number) =>
+  `${Math.round(n).toLocaleString("de-DE")} \u20AC`;
 
-/* Sub-benchmark colors & labels (matching benchmark-section & detail-table) */
+/* ── Sub-benchmark colors & labels ───────────────────────────── */
 const SUBS = [
   { key: "indikation_pct" as const, color: "#3b82f6", label: "Indikation" },
-  { key: "multiCaseRate_pct" as const, color: "#f59e0b", label: "MultiCaseRate" },
+  {
+    key: "multiCaseRate_pct" as const,
+    color: "#f59e0b",
+    label: "MultiCaseRate",
+  },
   { key: "frequenz_pct" as const, color: "#10b981", label: "Frequenz" },
   { key: "monitorZeit_pct" as const, color: "#8b5cf6", label: "Monitorzeit" },
 ];
+
+/* ── Potenzial breakdown tooltip ─────────────────────────────── */
+function PotenzialTooltip({
+  item,
+  mode,
+  children,
+}: {
+  item: TopItem;
+  mode: "analysen" | "euro";
+  children: React.ReactNode;
+}) {
+  const isEuro = mode === "euro";
+  const fmt = isEuro ? fmtEur : fmtInt;
+  const brutto = isEuro ? item.bruttoEuro : item.bruttoAnalyses;
+  const verlust = isEuro ? item.erlosverlustEuro : item.erlosverlustAnalyses;
+  const netto = isEuro ? item.potentialEuro : item.potentialAnalyses;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="bg-card text-foreground border shadow-lg px-4 py-3 min-w-[200px]"
+      >
+        <p className="text-[10px] text-muted-foreground mb-2.5 font-medium uppercase tracking-wider">
+          Zusammensetzung {isEuro ? "(EUR)" : "(Analysen)"}
+        </p>
+        <div className="flex flex-col gap-2">
+          {/* Brutto */}
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-[11px] text-foreground">
+              Einsparung durch Reduktion
+            </span>
+            <span className="text-[12px] font-bold tabular-nums text-emerald-600">
+              {fmt(brutto)}
+            </span>
+          </div>
+          {/* Minus divider */}
+          <div className="flex items-center gap-2">
+            <Minus className="h-3 w-3 text-muted-foreground" />
+            <div className="flex-1 border-t border-dashed border-muted-foreground/30" />
+          </div>
+          {/* Erlosverlust */}
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-[11px] text-foreground">
+              Erlosverluste durch Reduktion
+            </span>
+            <span className="text-[12px] font-bold tabular-nums text-red-500">
+              {fmt(verlust)}
+            </span>
+          </div>
+          {/* Equals divider */}
+          <div className="flex items-center gap-2">
+            <Equal className="h-3 w-3 text-muted-foreground" />
+            <div className="flex-1 border-t border-muted-foreground/40" />
+          </div>
+          {/* Netto */}
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-[11px] font-semibold text-foreground">
+              Netto-Potenzial
+            </span>
+            <span className="text-[13px] font-extrabold tabular-nums text-primary">
+              {fmt(netto)}
+            </span>
+          </div>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 /* ── Stacked bar with hover popup ──────────────────────────── */
 function StackedBar({ item }: { item: TopItem }) {
@@ -55,7 +131,7 @@ function StackedBar({ item }: { item: TopItem }) {
         side="top"
         className="bg-card text-foreground border shadow-lg px-3 py-2.5"
       >
-        <p className="text-[10px] text-muted-foreground mb-2 font-medium">
+        <p className="text-[10px] text-muted-foreground mb-2 font-medium uppercase tracking-wider">
           Hebelverteilung
         </p>
         <div className="flex flex-col gap-1.5">
@@ -82,7 +158,10 @@ function StackedBar({ item }: { item: TopItem }) {
                 </div>
                 <span
                   className="text-[11px] font-semibold tabular-nums w-[32px] text-right"
-                  style={{ color: pct > 0 ? s.color : "hsl(var(--muted-foreground))" }}
+                  style={{
+                    color:
+                      pct > 0 ? s.color : "hsl(var(--muted-foreground))",
+                  }}
                 >
                   {Math.round(pct)}%
                 </span>
@@ -132,10 +211,10 @@ export default function TopItemsTable({
               <TableRow>
                 <TableHead className="text-xs px-4 py-2">Name</TableHead>
                 <TableHead className="text-xs px-3 py-2 text-right">
-                  Potenzial
+                  Pot. Analysen
                 </TableHead>
                 <TableHead className="text-xs px-3 py-2 text-right">
-                  EUR
+                  Pot. EUR
                 </TableHead>
                 <TableHead className="text-xs px-3 py-2 text-center min-w-[100px]">
                   Hebel
@@ -164,11 +243,19 @@ export default function TopItemsTable({
                         <span className="truncate">{item.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="px-3 py-2.5 text-xs text-right font-semibold text-foreground tabular-nums">
-                      {fmtInt(item.potentialAnalyses)}
+                    <TableCell className="px-3 py-2.5 text-right">
+                      <PotenzialTooltip item={item} mode="analysen">
+                        <span className="text-xs font-semibold text-foreground tabular-nums cursor-default border-b border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
+                          {fmtInt(item.potentialAnalyses)}
+                        </span>
+                      </PotenzialTooltip>
                     </TableCell>
-                    <TableCell className="px-3 py-2.5 text-xs text-right text-muted-foreground tabular-nums">
-                      {fmtEur(item.potentialEuro)}
+                    <TableCell className="px-3 py-2.5 text-right">
+                      <PotenzialTooltip item={item} mode="euro">
+                        <span className="text-xs text-muted-foreground tabular-nums cursor-default border-b border-dashed border-muted-foreground/30 hover:border-primary/50 transition-colors">
+                          {fmtEur(item.potentialEuro)}
+                        </span>
+                      </PotenzialTooltip>
                     </TableCell>
                     <TableCell className="px-3 py-2.5">
                       <StackedBar item={item} />
