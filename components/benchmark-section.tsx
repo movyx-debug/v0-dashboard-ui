@@ -252,7 +252,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4 mt-2.5 pt-2 border-t border-dashed">
+            <div className="flex items-center gap-5 mt-2.5 pt-2 border-t border-dashed">
               <div>
                 <p className="text-[10px] text-muted-foreground">Analysen</p>
                 <p className="text-xs font-bold text-foreground tabular-nums">
@@ -260,23 +260,24 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 </p>
               </div>
               <div>
-                <p className="text-[10px] text-muted-foreground">Falle</p>
-                <p className="text-xs font-bold text-foreground tabular-nums">
-                  {fmtInt(benchmark.total_faelle)}
+                <p className="text-[10px] text-muted-foreground">Einsparung</p>
+                <p className="text-xs font-bold text-primary tabular-nums">
+                  {fmtInt(benchmark.hauptpot_net_analysen)}
+                  <span className="text-muted-foreground font-normal ml-1">
+                    ({benchmark.total_analysen > 0
+                      ? fmtPct(
+                          (benchmark.hauptpot_net_analysen /
+                            benchmark.total_analysen) *
+                            100,
+                        )
+                      : "0%"})
+                  </span>
                 </p>
               </div>
               <div>
-                <p className="text-[10px] text-muted-foreground">
-                  Einsparquote
-                </p>
-                <p className="text-xs font-bold text-primary tabular-nums">
-                  {benchmark.total_analysen > 0
-                    ? fmtPct(
-                        (benchmark.hauptpot_net_analysen /
-                          benchmark.total_analysen) *
-                          100,
-                      )
-                    : "0%"}
+                <p className="text-[10px] text-muted-foreground">Falle</p>
+                <p className="text-xs font-bold text-foreground tabular-nums">
+                  {fmtInt(benchmark.total_faelle)}
                 </p>
               </div>
             </div>
