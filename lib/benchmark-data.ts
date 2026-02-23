@@ -35,6 +35,10 @@ export interface AggregatedBenchmark {
   analysen_pro_fall_benchmark: number;
   hauptpot_net_analysen: number;
   hauptpot_net_euro: number;
+  /** Brutto reduction before revenue loss */
+  hauptpot_brut_euro: number;
+  /** Revenue loss from reduction */
+  erlosverlust_euro: number;
   total_analysen: number;
   total_faelle: number;
   // sub-benchmarks
@@ -269,6 +273,8 @@ export function aggregateBenchmark(
     ? filtered.reduce((s, r) => s + r.befundpreis, 0) / filtered.length
     : 0;
   const hauptpot_net_euro = hauptpot_net_analysen * avg_preis;
+  const hauptpot_brut_euro = hauptpot_net_euro * 1.35;
+  const erlosverlust_euro = hauptpot_brut_euro - hauptpot_net_euro;
 
   // Sub-benchmarks
   const pot_indikation = filtered.reduce((s, r) => s + r.pot_indikation_analysen, 0);
@@ -288,6 +294,8 @@ export function aggregateBenchmark(
     analysen_pro_fall_benchmark,
     hauptpot_net_analysen,
     hauptpot_net_euro,
+    hauptpot_brut_euro,
+    erlosverlust_euro,
     total_analysen,
     total_faelle,
     indikation: {

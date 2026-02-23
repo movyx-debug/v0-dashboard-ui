@@ -134,9 +134,17 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 {fmtPct(Math.abs(diffPct))}
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {fmtInt(benchmark.hauptpot_net_analysen)} einsparbare Analysen
-            </p>
+            <div className="flex items-center gap-3 mt-1.5 text-[11px]">
+              <span className="text-muted-foreground tabular-nums">
+                <span className="text-muted-foreground/60">Einsparung</span>{" "}
+                {fmtInt(Math.round(benchmark.hauptpot_brut_euro))} EUR
+              </span>
+              <span className="text-muted-foreground/40">-</span>
+              <span className="text-red-400/80 tabular-nums">
+                <span className="text-red-400/50">Erlosverluste</span>{" "}
+                {fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR
+              </span>
+            </div>
           </div>
 
           {/* ── Divider ────────────────────────────────────── */}
