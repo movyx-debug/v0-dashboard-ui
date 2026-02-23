@@ -163,7 +163,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
           {/* ── CENTER: 4 clickable sub-benchmark tiles ───── */}
-          <div className="flex-1 min-w-0 max-w-[420px]">
+          <div className="flex-1 min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Potenzial-Hebel
             </p>
