@@ -37,6 +37,12 @@ export interface OrgUnitShare {
   analysen: number;
 }
 
+export interface PatientenPhase {
+  name: string;
+  pct: number;
+  analysen: number;
+}
+
 export interface AggregatedBenchmark {
   analysen_pro_fall_kunde: number;
   analysen_pro_fall_benchmark: number;
@@ -51,7 +57,7 @@ export interface AggregatedBenchmark {
   /** Benchmark-side analysen (faelle * a/f benchmark) */
   benchmark_analysen: number;
   // sub-benchmarks
-  indikation: { analysen: number; pct: number; kunde: number; benchmark: number };
+  indikation: { analysen: number; pct: number; kunde: number; benchmark: number; phasen: PatientenPhase[] };
   multiCaseRate: { analysen: number; pct: number; kunde: number; benchmark: number };
   frequenz: { analysen: number; pct: number; kunde: number; benchmark: number };
   monitorZeit: { analysen: number; pct: number; kunde: number; benchmark: number };
@@ -326,6 +332,11 @@ export function aggregateBenchmark(
       pct: pot_total > 0 ? (pot_indikation / pot_total) * 100 : 0,
       kunde: avg((r) => r.indikationsquote_kunde),
       benchmark: avg((r) => r.indikationsquote_benchmark),
+      phasen: [
+        { name: "Aufnahme", pct: 42, analysen: Math.round(pot_indikation * 0.42) },
+        { name: "Verlauf", pct: 38, analysen: Math.round(pot_indikation * 0.38) },
+        { name: "Entlass", pct: 20, analysen: Math.round(pot_indikation * 0.20) },
+      ],
     },
     multiCaseRate: {
       analysen: pot_multiCase,
@@ -349,7 +360,7 @@ export function aggregateBenchmark(
   };
 }
 
-// ── Get unique values for filters ────────────────────────────────────────────
+// ── Get unique values for filters ─────────────────────��──────────────────────
 
 export function getUniqueParameters(data: BenchmarkRow[]): string[] {
   return [...new Set(data.map((r) => r.parameter_name))];

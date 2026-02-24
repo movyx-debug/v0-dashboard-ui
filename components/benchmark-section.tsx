@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import type { AggregatedBenchmark } from "@/lib/benchmark-data";
+import type { AggregatedBenchmark, PatientenPhase } from "@/lib/benchmark-data";
 import {
   Activity,
   Repeat2,
