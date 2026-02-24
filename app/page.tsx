@@ -13,12 +13,21 @@ import FilterBar from "@/components/filter-panel";
 import TopItemsTable from "@/components/top-items-table";
 import DetailTable from "@/components/detail-table";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Building2, FlaskConical, Stethoscope, TestTube, LayoutGrid, TableProperties } from "lucide-react";
+import { Building2, FlaskConical, Stethoscope, TestTube, LayoutGrid, TableProperties, FileDown, Loader2, Search } from "lucide-react";
+import FilterSearch from "@/components/filter-search";
+import SettingsPopover from "@/components/settings-popover";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   const [activeParam, setActiveParam] = useState<string | null>(null);
   const [activeDrg, setActiveDrg] = useState<string | null>(null);
   const [activeFach, setActiveFach] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = useCallback(() => {
+    setExporting(true);
+    setTimeout(() => setExporting(false), 2000);
+  }, []);
 
   const onSelectParam = useCallback(
     (p: string) => setActiveParam((prev) => (prev === p ? null : p)),
@@ -91,10 +100,25 @@ export default function DashboardPage() {
             <span className="text-sm font-bold text-foreground tracking-tight">LabLense</span>
             <span className="text-xs text-muted-foreground hidden sm:inline">Benchmarking</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground">Musterkrankenhaus</span>
             <span className="text-[10px] text-muted-foreground">|</span>
             <span className="text-xs font-semibold text-foreground">2025</span>
+            <SettingsPopover />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+              onClick={handleExport}
+              disabled={exporting}
+            >
+              {exporting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <FileDown className="h-3.5 w-3.5" />
+              )}
+              {exporting ? "Wird erstellt..." : "Export Benchmark-Bericht"}
+            </Button>
           </div>
         </div>
       </header>
@@ -118,16 +142,24 @@ export default function DashboardPage() {
 
         {/* Tab views */}
         <Tabs defaultValue="top" className="w-full">
-          <TabsList className="bg-muted/50">
-            <TabsTrigger value="top" className="gap-1.5 text-xs">
-              <LayoutGrid className="h-3.5 w-3.5" />
-              Top-Ansicht
-            </TabsTrigger>
-            <TabsTrigger value="detail" className="gap-1.5 text-xs">
-              <TableProperties className="h-3.5 w-3.5" />
-              Detail-Ansicht
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between gap-4">
+            <TabsList className="bg-muted/50">
+              <TabsTrigger value="top" className="gap-1.5 text-xs">
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Top-Ansicht
+              </TabsTrigger>
+              <TabsTrigger value="detail" className="gap-1.5 text-xs">
+                <TableProperties className="h-3.5 w-3.5" />
+                Detail-Ansicht
+              </TabsTrigger>
+            </TabsList>
+            <FilterSearch
+              data={MOCK_DATA}
+              onSelectParam={onSelectParam}
+              onSelectDrg={onSelectDrg}
+              onSelectFach={onSelectFach}
+            />
+          </div>
 
           <TabsContent value="top">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

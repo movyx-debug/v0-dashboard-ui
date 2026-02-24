@@ -18,14 +18,15 @@ import {
 import type React from "react";
 
 const fmtInt = (n: number) => Math.round(n).toLocaleString("de-DE");
-const fmtEur = (n: number) => `${Math.round(n).toLocaleString("de-DE")} \u20AC`;
+const fmtEur = (n: number) =>
+  `${Math.round(n).toLocaleString("de-DE")} \u20AC`;
 
-/* Sub-benchmark colors & labels (matching benchmark-section & detail-table) */
+/* ── Sub-benchmark colors & labels ───────────────────────────── */
 const SUBS = [
-  { key: "indikation_pct" as const, color: "#3b82f6", label: "Indikation" },
-  { key: "multiCaseRate_pct" as const, color: "#f59e0b", label: "MultiCaseRate" },
-  { key: "frequenz_pct" as const, color: "#10b981", label: "Frequenz" },
-  { key: "monitorZeit_pct" as const, color: "#8b5cf6", label: "Monitorzeit" },
+  { key: "indikation_pct" as const, color: "#6889b1", label: "Indikation" },
+  { key: "multiCaseRate_pct" as const, color: "#c4965a", label: "MultiCaseRate" },
+  { key: "frequenz_pct" as const, color: "#6fa782", label: "Frequenz" },
+  { key: "monitorZeit_pct" as const, color: "#9882b5", label: "Monitorzeit" },
 ];
 
 /* ── Stacked bar with hover popup ──────────────────────────── */
@@ -38,15 +39,12 @@ function StackedBar({ item }: { item: TopItem }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex h-[7px] w-full rounded-full overflow-hidden bg-secondary cursor-default">
+        <div className="flex h-[9px] w-full rounded-full overflow-hidden bg-secondary cursor-default">
           {segments.map((seg) => (
             <div
               key={seg.key}
-              className="h-full transition-all duration-300 first:rounded-l-full last:rounded-r-full"
-              style={{
-                width: `${seg.pct}%`,
-                backgroundColor: seg.color,
-              }}
+              className="h-full transition-all duration-300 first:rounded-l-full last:rounded-r-full border-r border-white/80 last:border-r-0"
+              style={{ width: `${seg.pct}%`, backgroundColor: seg.color }}
             />
           ))}
         </div>
@@ -55,7 +53,7 @@ function StackedBar({ item }: { item: TopItem }) {
         side="top"
         className="bg-card text-foreground border shadow-lg px-3 py-2.5"
       >
-        <p className="text-[10px] text-muted-foreground mb-2 font-medium">
+        <p className="text-[10px] text-muted-foreground mb-2 font-medium uppercase tracking-wider">
           Hebelverteilung
         </p>
         <div className="flex flex-col gap-1.5">
@@ -131,15 +129,9 @@ export default function TopItemsTable({
             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow>
                 <TableHead className="text-xs px-4 py-2">Name</TableHead>
-                <TableHead className="text-xs px-3 py-2 text-right">
-                  Potenzial
-                </TableHead>
-                <TableHead className="text-xs px-3 py-2 text-right">
-                  EUR
-                </TableHead>
-                <TableHead className="text-xs px-3 py-2 text-center min-w-[100px]">
-                  Hebel
-                </TableHead>
+                <TableHead className="text-xs px-2 py-2 text-right whitespace-nowrap">Pot. Analysen</TableHead>
+                <TableHead className="text-xs px-2 py-2 text-right whitespace-nowrap font-semibold">Pot. EUR</TableHead>
+                <TableHead className="text-xs px-3 py-2 text-center min-w-[100px]">Hebel</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -148,9 +140,7 @@ export default function TopItemsTable({
                 return (
                   <TableRow
                     key={item.name}
-                    className={`cursor-pointer transition-colors hover:bg-muted/50 ${
-                      isActive ? "bg-muted/70" : ""
-                    }`}
+                    className={`cursor-pointer transition-colors hover:bg-muted/50 ${isActive ? "bg-muted/70" : ""}`}
                     onClick={() => onSelect(item.name)}
                   >
                     <TableCell className="px-4 py-2.5 text-xs font-medium text-foreground max-w-[180px] truncate">
@@ -164,10 +154,12 @@ export default function TopItemsTable({
                         <span className="truncate">{item.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="px-3 py-2.5 text-xs text-right font-semibold text-foreground tabular-nums">
+                    {/* Pot. Analysen -- normal style like A/F Kunde */}
+                    <TableCell className="px-2 py-2.5 text-right text-xs tabular-nums text-muted-foreground">
                       {fmtInt(item.potentialAnalyses)}
                     </TableCell>
-                    <TableCell className="px-3 py-2.5 text-xs text-right text-muted-foreground tabular-nums">
+                    {/* Pot. EUR -- bold black */}
+                    <TableCell className="px-2 py-2.5 text-right text-xs tabular-nums font-bold text-foreground">
                       {fmtEur(item.potentialEuro)}
                     </TableCell>
                     <TableCell className="px-3 py-2.5">

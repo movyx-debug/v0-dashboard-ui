@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import type { AggregatedBenchmark } from "@/lib/benchmark-data";
 import {
   Activity,
@@ -11,6 +11,7 @@ import {
   TrendingUp,
   ArrowRight,
 } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   Dialog,
   DialogContent,
@@ -36,8 +37,8 @@ const fmtInt = (n: number) => Math.round(n).toLocaleString("de-DE");
 
 const SUB_META = {
   indikation: {
-    color: "#3b82f6",
-    bgLight: "rgba(59,130,246,0.08)",
+    color: "#5b8ab5",
+    bgLight: "rgba(91,138,181,0.08)",
     icon: Activity,
     label: "Indikation",
     desc: "Wird der Parameter bei zu vielen Patienten angefordert?",
@@ -46,8 +47,8 @@ const SUB_META = {
     unit: "%",
   },
   multiCaseRate: {
-    color: "#f59e0b",
-    bgLight: "rgba(245,158,11,0.08)",
+    color: "#cb7b5a",
+    bgLight: "rgba(203,123,90,0.08)",
     icon: Repeat2,
     label: "MultiCaseRate",
     desc: "Gehen zu viele Falle ins Monitoring?",
@@ -56,8 +57,8 @@ const SUB_META = {
     unit: "%",
   },
   frequenz: {
-    color: "#10b981",
-    bgLight: "rgba(16,185,129,0.08)",
+    color: "#4da8a0",
+    bgLight: "rgba(77,168,160,0.08)",
     icon: Clock,
     label: "Frequenz",
     desc: "Wird der Parameter zu haufig nachbestellt?",
@@ -66,8 +67,8 @@ const SUB_META = {
     unit: "Tage",
   },
   monitorZeit: {
-    color: "#8b5cf6",
-    bgLight: "rgba(139,92,246,0.08)",
+    color: "#c07a8e",
+    bgLight: "rgba(192,122,142,0.08)",
     icon: Timer,
     label: "Monitorzeit",
     desc: "Dauert das Monitoring zu lange?",
@@ -90,8 +91,16 @@ interface Props {
   title: string;
 }
 
+const ORG_COLORS = ["#2d8a6e", "#5ab896", "#a3d9c4"];
+
 export default function BenchmarkSection({ benchmark, title }: Props) {
   const [openSub, setOpenSub] = useState<SubKey | null>(null);
+
+  // Key for donut animation: changes whenever data changes, triggering re-mount
+  const donutKey = useMemo(
+    () => benchmark.orgUnits.map((o) => `${o.name}:${Math.round(o.euro)}`).join("|"),
+    [benchmark.orgUnits],
+  );
 
   const diff =
     benchmark.analysen_pro_fall_kunde - benchmark.analysen_pro_fall_benchmark;
@@ -134,9 +143,20 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 {fmtPct(Math.abs(diffPct))}
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {fmtInt(benchmark.hauptpot_net_analysen)} einsparbare Analysen
-            </p>
+            <div className="mt-2 space-y-0.5 text-[11px]">
+              <div className="flex items-center justify-between gap-4 tabular-nums">
+                <span className="text-muted-foreground/70">Einsparung</span>
+                <span className="text-muted-foreground">
+                  {fmtInt(Math.round(benchmark.hauptpot_brut_euro))} EUR
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4 tabular-nums">
+                <span className="text-red-400/60">Erlosverluste</span>
+                <span className="text-red-400/80">
+                  -{fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* ── Divider ────────────────────────────────────── */}
@@ -218,55 +238,107 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
           {/* ── RIGHT: Analysen/Fall comparison + stats ───── */}
-          <div className="flex-shrink-0 min-w-[200px]">
+          <div className="flex-shrink-0">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Analysen pro Fall
             </p>
-            <div className="flex items-end gap-2.5">
-              <div>
-                <p className="text-xl font-bold text-foreground leading-none tabular-nums">
-                  {fmtDe(benchmark.analysen_pro_fall_kunde)}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Kunde
-                </p>
+            <div className="flex items-start gap-4">
+              {/* Grid table: rows = Analysen, Falle, A/F | cols = label, Kunde, Benchmark */}
+              <div className="grid grid-cols-[auto_auto_auto] gap-x-4 gap-y-0.5 items-baseline">
+                {/* Header row */}
+                <div />
+                <span className="text-[10px] text-muted-foreground text-right">Kunde</span>
+                <span className="text-[10px] text-muted-foreground text-right">Benchmark</span>
+
+                {/* Analysen */}
+                <span className="text-[10px] text-muted-foreground">Analysen</span>
+                <span className="text-[11px] tabular-nums text-foreground text-right">{fmtInt(benchmark.total_analysen)}</span>
+                <span className="text-[11px] tabular-nums text-primary/70 text-right">{fmtInt(Math.round(benchmark.benchmark_analysen))}</span>
+
+                {/* Falle */}
+                <span className="text-[10px] text-muted-foreground">Falle</span>
+                <span className="text-[11px] tabular-nums text-foreground text-right">{fmtInt(benchmark.total_faelle)}</span>
+                <span className="text-[11px] tabular-nums text-primary/70 text-right">{fmtInt(benchmark.total_faelle)}</span>
+
+                {/* Divider spanning all cols */}
+                <div className="col-span-3 border-t border-border my-0.5" />
+
+                {/* A/F big row */}
+                <span className="text-[10px] font-medium text-muted-foreground">A / F</span>
+                <span className="text-base font-bold tabular-nums text-foreground text-right">{fmtDe(benchmark.analysen_pro_fall_kunde)}</span>
+                <span className="text-base font-bold tabular-nums text-primary text-right">{fmtDe(benchmark.analysen_pro_fall_benchmark)}</span>
               </div>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground mb-2" />
-              <div>
-                <p className="text-xl font-bold text-primary leading-none tabular-nums">
-                  {fmtDe(benchmark.analysen_pro_fall_benchmark)}
+
+              {/* Divider */}
+              <div className="h-14 w-px bg-border flex-shrink-0 mt-3" />
+
+              {/* Einsparung */}
+              <div className="mt-3">
+                <p className="text-[10px] text-muted-foreground">Einsparung</p>
+                <p className="text-sm font-bold text-primary tabular-nums leading-tight mt-0.5">
+                  {fmtInt(benchmark.hauptpot_net_analysen)} Analysen
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Benchmark
+                <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
+                  {benchmark.total_analysen > 0
+                    ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100)
+                    : "0%"} der Gesamtanalysen
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4 mt-2.5 pt-2 border-t border-dashed">
-              <div>
-                <p className="text-[10px] text-muted-foreground">Analysen</p>
-                <p className="text-xs font-bold text-foreground tabular-nums">
-                  {fmtInt(benchmark.total_analysen)}
-                </p>
+          </div>
+
+          {/* ── Divider ────────────────────────────────────── */}
+          <div className="hidden lg:block w-px self-stretch bg-border" />
+
+          {/* ── FAR RIGHT: Org Unit Donut ──────────────────── */}
+          <div className="flex-shrink-0 w-fit">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+              Organisationseinheit
+            </p>
+            <div className="flex items-center gap-3">
+              {/* Donut */}
+              <div className="h-[85px] w-[85px] flex-shrink-0" key={donutKey}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={benchmark.orgUnits}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={24}
+                      outerRadius={38}
+                      paddingAngle={3}
+                      dataKey="pct"
+                      nameKey="name"
+                      stroke="none"
+                      animationBegin={0}
+                      animationDuration={600}
+                      animationEasing="ease-out"
+                    >
+                      {benchmark.orgUnits.map((_, i) => (
+                        <Cell key={i} fill={ORG_COLORS[i % ORG_COLORS.length]} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground">Falle</p>
-                <p className="text-xs font-bold text-foreground tabular-nums">
-                  {fmtInt(benchmark.total_faelle)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] text-muted-foreground">
-                  Einsparquote
-                </p>
-                <p className="text-xs font-bold text-primary tabular-nums">
-                  {benchmark.total_analysen > 0
-                    ? fmtPct(
-                        (benchmark.hauptpot_net_analysen /
-                          benchmark.total_analysen) *
-                          100,
-                      )
-                    : "0%"}
-                </p>
+              {/* Legend beside donut - grid for alignment */}
+              <div className="grid grid-cols-[auto_1fr_auto] gap-x-2 gap-y-1.5 items-center whitespace-nowrap">
+                {benchmark.orgUnits.map((ou, i) => (
+                  <React.Fragment key={ou.name}>
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="h-2 w-2 rounded-sm flex-shrink-0"
+                        style={{ backgroundColor: ORG_COLORS[i] }}
+                      />
+                      <span className="text-[11px] text-muted-foreground">{ou.name}</span>
+                    </div>
+                    <div />
+                    <span className="text-[11px] tabular-nums text-right">
+                      <span className="font-semibold text-foreground">{fmtInt(Math.round(ou.euro))} EUR</span>
+                      <span className="text-muted-foreground font-normal ml-1">({Math.round(ou.pct)}%)</span>
+                    </span>
+                  </React.Fragment>
+                ))}
               </div>
             </div>
           </div>

@@ -36,13 +36,15 @@ const fmtDe = (n: number | null, dec = 2) =>
         maximumFractionDigits: dec,
       });
 const fmtInt = (n: number) => Math.round(n).toLocaleString("de-DE");
+const fmtEur = (n: number) =>
+  `${Math.round(n).toLocaleString("de-DE")} \u20AC`;
 
-/* ── Sub-benchmark meta (colors match BenchmarkSection) ──────── */
+/* ── Sub-benchmark meta ──────────────────────────────────────── */
 const SUB_COLORS = {
-  indikation: { color: "#3b82f6", label: "Indikation", unit: "%" },
-  multiCaseRate: { color: "#f59e0b", label: "MultiCaseRate", unit: "%" },
-  frequenz: { color: "#10b981", label: "Frequenz", unit: "Tage" },
-  monitorZeit: { color: "#8b5cf6", label: "Monitorzeit", unit: "Tage" },
+  indikation: { color: "#6889b1", label: "Indikation", unit: "%" },
+  multiCaseRate: { color: "#c4965a", label: "MultiCaseRate", unit: "%" },
+  frequenz: { color: "#6fa782", label: "Frequenz", unit: "Tage" },
+  monitorZeit: { color: "#9882b5", label: "Monitorzeit", unit: "Tage" },
 } as const;
 
 type SubKey = keyof typeof SUB_COLORS;
@@ -56,6 +58,8 @@ type SortField =
   | "analysen_pro_fall_kunde"
   | "analysen_pro_fall_benchmark"
   | "hauptpot_net_analysen"
+  | "hauptpot_brut_euro"
+  | "erlosverlust_euro"
   | "hauptpot_net_euro"
   | "indikation_pct"
   | "multiCaseRate_pct"
@@ -73,7 +77,7 @@ interface Props {
   onSelectFach: (name: string) => void;
 }
 
-/* ── Helper to get sub-benchmark kunde/benchmark from row ──── */
+/* ── Helper: sub-benchmark kunde/benchmark from row ──────── */
 function getSubValues(
   row: BenchmarkRow,
   key: SubKey
@@ -147,7 +151,10 @@ function SubBar({ row, subKey }: { row: BenchmarkRow; subKey: SubKey }) {
           </span>
         </div>
         <div className="mt-1.5 pt-1.5 border-t text-[10px] text-muted-foreground">
-          Anteil am Potenzial: <span className="font-semibold" style={{ color: meta.color }}>{Math.round(pct)}%</span>
+          Anteil am Potenzial:{" "}
+          <span className="font-semibold" style={{ color: meta.color }}>
+            {Math.round(pct)}%
+          </span>
         </div>
       </TooltipContent>
     </Tooltip>
@@ -161,17 +168,23 @@ export default function DetailTable({
   onSelectDrg,
   onSelectFach,
 }: Props) {
-  const [sortField, setSortField] = useState<SortField>("hauptpot_net_analysen");
+  const [sortField, setSortField] = useState<SortField>("hauptpot_net_euro");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [page, setPage] = useState(0);
 
-  // Compute euro per row
   const enriched = useMemo(
     () =>
-      data.map((r) => ({
-        ...r,
-        hauptpot_net_euro: r.hauptpot_net_analysen * r.befundpreis,
-      })),
+      data.map((r) => {
+        const netEuro = r.hauptpot_net_analysen * r.befundpreis;
+        const brutEuro = netEuro * 1.35;
+        const verlustEuro = brutEuro - netEuro;
+        return {
+          ...r,
+          hauptpot_net_euro: netEuro,
+          hauptpot_brut_euro: brutEuro,
+          erlosverlust_euro: verlustEuro,
+        };
+      }),
     [data]
   );
 
@@ -242,7 +255,6 @@ export default function DetailTable({
   return (
     <TooltipProvider delayDuration={100}>
       <div className="bg-card border rounded-2xl shadow-sm overflow-hidden flex flex-col">
-        {/* Table scroll container */}
         <div className="overflow-auto flex-1" style={{ maxHeight: "calc(100vh - 280px)" }}>
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
@@ -253,8 +265,9 @@ export default function DetailTable({
                 <HeadCell field="analysen_pro_fall_kunde" label="A/F Kunde" />
                 <HeadCell field="analysen_pro_fall_benchmark" label="A/F Benchmark" />
                 <HeadCell field="hauptpot_net_analysen" label="Pot. Analysen" />
-                <HeadCell field="hauptpot_net_euro" label="Pot. EUR" />
-                {/* Sub-benchmark % columns with colored header dots */}
+                <HeadCell field="hauptpot_brut_euro" label="Pot. EUR" />
+                <HeadCell field="erlosverlust_euro" label="Erlosverluste" className="text-red-400" />
+                <HeadCell field="hauptpot_net_euro" label="Pot. EUR netto" className="font-semibold" />
                 {SUB_KEYS.map((key) => (
                   <TableHead
                     key={key}
@@ -279,7 +292,6 @@ export default function DetailTable({
                   key={`${row.parameter_name}-${row.drg}-${row.fachabteilung}-${idx}`}
                   className="hover:bg-muted/30"
                 >
-                  {/* Parameter */}
                   <TableCell
                     className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap max-w-[180px] truncate"
                     onClick={() => onSelectParam(row.parameter_name)}
@@ -287,14 +299,12 @@ export default function DetailTable({
                   >
                     {row.parameter_name}
                   </TableCell>
-                  {/* DRG */}
                   <TableCell
                     className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap"
                     onClick={() => onSelectDrg(row.drg)}
                   >
                     {row.drg}
                   </TableCell>
-                  {/* Fachabteilung */}
                   <TableCell
                     className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap max-w-[140px] truncate"
                     onClick={() => onSelectFach(row.fachabteilung)}
@@ -310,15 +320,22 @@ export default function DetailTable({
                   <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
                     {fmtDe(row.analysen_pro_fall_benchmark)}
                   </TableCell>
-                  {/* Potenzial Analysen */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums font-semibold text-foreground whitespace-nowrap">
+                  {/* Pot. Analysen -- normal style like A/F Kunde */}
+                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
                     {fmtDe(row.hauptpot_net_analysen, 0)}
                   </TableCell>
-                  {/* Potenzial EUR */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums font-semibold text-foreground whitespace-nowrap">
-                    {fmtDe(row.hauptpot_net_euro, 0)} {"EUR"}
+                  {/* Pot. EUR (brutto) -- normal style */}
+                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
+                    {fmtEur(row.hauptpot_brut_euro)}
                   </TableCell>
-                  {/* Sub-benchmark bars */}
+                  {/* Erlosverluste -- red tinted */}
+                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-red-400 whitespace-nowrap">
+                    -{fmtEur(row.erlosverlust_euro)}
+                  </TableCell>
+                  {/* Pot. EUR netto -- bold black */}
+                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums font-bold text-foreground whitespace-nowrap">
+                    {fmtEur(row.hauptpot_net_euro)}
+                  </TableCell>
                   {SUB_KEYS.map((key) => (
                     <TableCell key={key} className="px-2 py-2">
                       <SubBar row={row} subKey={key} />

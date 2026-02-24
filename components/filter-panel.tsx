@@ -63,7 +63,7 @@ export default function FilterBar({
           <div className="flex items-center gap-1.5 text-muted-foreground flex-shrink-0">
             <Filter className="h-3.5 w-3.5" />
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap flex-1">
             {filters.map((f) => {
               const style = TYPE_STYLES[f.type];
               return (
@@ -103,7 +103,7 @@ export default function FilterBar({
         <div className="flex items-center gap-1.5 text-muted-foreground/50">
           <SlidersHorizontal className="h-3.5 w-3.5" />
           <span className="text-[11px]">
-            Klicken Sie auf eine Zeile in den Tabellen, um zu filtern
+            Klicken Sie auf eine Zeile oder suchen Sie, um zu filtern
           </span>
         </div>
       )}

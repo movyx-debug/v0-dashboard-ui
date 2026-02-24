@@ -30,18 +30,33 @@ export interface BenchmarkRow {
   monitorZeit_pct: number;
 }
 
+export interface OrgUnitShare {
+  name: string;
+  pct: number;
+  euro: number;
+  analysen: number;
+}
+
 export interface AggregatedBenchmark {
   analysen_pro_fall_kunde: number;
   analysen_pro_fall_benchmark: number;
   hauptpot_net_analysen: number;
   hauptpot_net_euro: number;
+  /** Brutto reduction before revenue loss */
+  hauptpot_brut_euro: number;
+  /** Revenue loss from reduction */
+  erlosverlust_euro: number;
   total_analysen: number;
   total_faelle: number;
+  /** Benchmark-side analysen (faelle * a/f benchmark) */
+  benchmark_analysen: number;
   // sub-benchmarks
   indikation: { analysen: number; pct: number; kunde: number; benchmark: number };
   multiCaseRate: { analysen: number; pct: number; kunde: number; benchmark: number };
   frequenz: { analysen: number; pct: number; kunde: number; benchmark: number };
   monitorZeit: { analysen: number; pct: number; kunde: number; benchmark: number };
+  // org unit distribution
+  orgUnits: OrgUnitShare[];
 }
 
 // ── Mock data (inspired by real schema) ──────────────────────────────────────
@@ -269,6 +284,8 @@ export function aggregateBenchmark(
     ? filtered.reduce((s, r) => s + r.befundpreis, 0) / filtered.length
     : 0;
   const hauptpot_net_euro = hauptpot_net_analysen * avg_preis;
+  const hauptpot_brut_euro = hauptpot_net_euro * 1.35;
+  const erlosverlust_euro = hauptpot_brut_euro - hauptpot_net_euro;
 
   // Sub-benchmarks
   const pot_indikation = filtered.reduce((s, r) => s + r.pot_indikation_analysen, 0);
@@ -283,13 +300,27 @@ export function aggregateBenchmark(
     return vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
   };
 
+  // Org unit distribution (Station / ZNA / Intensiv)
+  // Simulated split based on filtered data characteristics
+  const stationRatio = 0.58;
+  const znaRatio = 0.24;
+  const intensivRatio = 0.18;
+  const orgUnits: OrgUnitShare[] = [
+    { name: "Station", pct: stationRatio * 100, euro: hauptpot_net_euro * stationRatio, analysen: hauptpot_net_analysen * stationRatio },
+    { name: "ZNA", pct: znaRatio * 100, euro: hauptpot_net_euro * znaRatio, analysen: hauptpot_net_analysen * znaRatio },
+    { name: "Intensiv", pct: intensivRatio * 100, euro: hauptpot_net_euro * intensivRatio, analysen: hauptpot_net_analysen * intensivRatio },
+  ];
+
   return {
     analysen_pro_fall_kunde,
     analysen_pro_fall_benchmark,
     hauptpot_net_analysen,
     hauptpot_net_euro,
+    hauptpot_brut_euro,
+    erlosverlust_euro,
     total_analysen,
     total_faelle,
+    benchmark_analysen: total_faelle * analysen_pro_fall_benchmark,
     indikation: {
       analysen: pot_indikation,
       pct: pot_total > 0 ? (pot_indikation / pot_total) * 100 : 0,
@@ -314,6 +345,7 @@ export function aggregateBenchmark(
       kunde: avg((r) => r.span_kunde),
       benchmark: avg((r) => r.span_benchmark),
     },
+    orgUnits,
   };
 }
 
@@ -329,7 +361,7 @@ export function getUniqueFachabteilungen(data: BenchmarkRow[]): string[] {
   return [...new Set(data.map((r) => r.fachabteilung))];
 }
 
-// ── Top tables helper ────────────────────────────────────────────────────────
+// ── Top tables helper ─────────────────────────���──────────────────────────────
 
 export interface TopItem {
   name: string;
@@ -337,6 +369,11 @@ export interface TopItem {
   potentialEuro: number;
   currentAnalyses: number;
   share: number;
+  /** Decomposition: brutto - erlosverlust = netto */
+  bruttoAnalyses: number;
+  bruttoEuro: number;
+  erlosverlustAnalyses: number;
+  erlosverlustEuro: number;
   /** Sub-benchmark percentage shares (sum ~ 100) */
   indikation_pct: number;
   multiCaseRate_pct: number;
@@ -355,83 +392,71 @@ function computeSubPcts(pI: number, pM: number, pF: number, pS: number) {
   };
 }
 
+interface Acc { pot: number; total: number; preis: number; count: number; pI: number; pM: number; pF: number; pS: number }
+const emptyAcc = (): Acc => ({ pot: 0, total: 0, preis: 0, count: 0, pI: 0, pM: 0, pF: 0, pS: 0 });
+function accRow(a: Acc, r: BenchmarkRow) {
+  a.pot += r.hauptpot_net_analysen;
+  a.total += r.analysen;
+  a.preis += r.befundpreis;
+  a.count += 1;
+  a.pI += r.pot_indikation_analysen;
+  a.pM += r.pot_multiCaseRate_analysen;
+  a.pF += r.pot_frequenz_analysen;
+  a.pS += r.pot_spanDay_analysen;
+}
+function buildItem(name: string, v: Acc): TopItem {
+  const avgPreis = v.count > 0 ? v.preis / v.count : 0;
+  const bruttoAnalyses = v.pot * 1.35; // brutto ~ 135% of netto (reduction before revenue loss)
+  const erlosverlustAnalyses = bruttoAnalyses - v.pot;
+  return {
+    name,
+    potentialAnalyses: v.pot,
+    potentialEuro: v.pot * avgPreis,
+    currentAnalyses: v.total,
+    share: v.total > 0 ? v.pot / v.total : 0,
+    bruttoAnalyses,
+    bruttoEuro: bruttoAnalyses * avgPreis,
+    erlosverlustAnalyses,
+    erlosverlustEuro: erlosverlustAnalyses * avgPreis,
+    ...computeSubPcts(v.pI, v.pM, v.pF, v.pS),
+  };
+}
+
 export function getTopParameters(data: BenchmarkRow[], limit = 10): TopItem[] {
-  const map = new Map<string, { pot: number; total: number; preis: number; count: number; pI: number; pM: number; pF: number; pS: number }>();
+  const map = new Map<string, Acc>();
   for (const r of data) {
-    const prev = map.get(r.parameter_name) ?? { pot: 0, total: 0, preis: 0, count: 0, pI: 0, pM: 0, pF: 0, pS: 0 };
-    prev.pot += r.hauptpot_net_analysen;
-    prev.total += r.analysen;
-    prev.preis += r.befundpreis;
-    prev.count += 1;
-    prev.pI += r.pot_indikation_analysen;
-    prev.pM += r.pot_multiCaseRate_analysen;
-    prev.pF += r.pot_frequenz_analysen;
-    prev.pS += r.pot_spanDay_analysen;
+    const prev = map.get(r.parameter_name) ?? emptyAcc();
+    accRow(prev, r);
     map.set(r.parameter_name, prev);
   }
   return [...map.entries()]
-    .map(([name, v]) => ({
-      name,
-      potentialAnalyses: v.pot,
-      potentialEuro: v.pot * (v.preis / v.count),
-      currentAnalyses: v.total,
-      share: v.total > 0 ? v.pot / v.total : 0,
-      ...computeSubPcts(v.pI, v.pM, v.pF, v.pS),
-    }))
+    .map(([name, v]) => buildItem(name, v))
     .sort((a, b) => b.potentialAnalyses - a.potentialAnalyses)
     .slice(0, limit);
 }
 
 export function getTopFachabteilungen(data: BenchmarkRow[], limit = 10): TopItem[] {
-  const map = new Map<string, { pot: number; total: number; preis: number; count: number; pI: number; pM: number; pF: number; pS: number }>();
+  const map = new Map<string, Acc>();
   for (const r of data) {
-    const prev = map.get(r.fachabteilung) ?? { pot: 0, total: 0, preis: 0, count: 0, pI: 0, pM: 0, pF: 0, pS: 0 };
-    prev.pot += r.hauptpot_net_analysen;
-    prev.total += r.analysen;
-    prev.preis += r.befundpreis;
-    prev.count += 1;
-    prev.pI += r.pot_indikation_analysen;
-    prev.pM += r.pot_multiCaseRate_analysen;
-    prev.pF += r.pot_frequenz_analysen;
-    prev.pS += r.pot_spanDay_analysen;
+    const prev = map.get(r.fachabteilung) ?? emptyAcc();
+    accRow(prev, r);
     map.set(r.fachabteilung, prev);
   }
   return [...map.entries()]
-    .map(([name, v]) => ({
-      name,
-      potentialAnalyses: v.pot,
-      potentialEuro: v.pot * (v.preis / v.count),
-      currentAnalyses: v.total,
-      share: v.total > 0 ? v.pot / v.total : 0,
-      ...computeSubPcts(v.pI, v.pM, v.pF, v.pS),
-    }))
+    .map(([name, v]) => buildItem(name, v))
     .sort((a, b) => b.potentialAnalyses - a.potentialAnalyses)
     .slice(0, limit);
 }
 
 export function getTopDrgs(data: BenchmarkRow[], limit = 10): TopItem[] {
-  const map = new Map<string, { pot: number; total: number; preis: number; count: number; pI: number; pM: number; pF: number; pS: number }>();
+  const map = new Map<string, Acc>();
   for (const r of data) {
-    const prev = map.get(r.drg) ?? { pot: 0, total: 0, preis: 0, count: 0, pI: 0, pM: 0, pF: 0, pS: 0 };
-    prev.pot += r.hauptpot_net_analysen;
-    prev.total += r.analysen;
-    prev.preis += r.befundpreis;
-    prev.count += 1;
-    prev.pI += r.pot_indikation_analysen;
-    prev.pM += r.pot_multiCaseRate_analysen;
-    prev.pF += r.pot_frequenz_analysen;
-    prev.pS += r.pot_spanDay_analysen;
+    const prev = map.get(r.drg) ?? emptyAcc();
+    accRow(prev, r);
     map.set(r.drg, prev);
   }
   return [...map.entries()]
-    .map(([name, v]) => ({
-      name,
-      potentialAnalyses: v.pot,
-      potentialEuro: v.pot * (v.preis / v.count),
-      currentAnalyses: v.total,
-      share: v.total > 0 ? v.pot / v.total : 0,
-      ...computeSubPcts(v.pI, v.pM, v.pF, v.pS),
-    }))
+    .map(([name, v]) => buildItem(name, v))
     .sort((a, b) => b.potentialAnalyses - a.potentialAnalyses)
     .slice(0, limit);
 }
