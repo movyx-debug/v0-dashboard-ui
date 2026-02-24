@@ -97,6 +97,11 @@ function getSubValues(
   }
 }
 
+/* ── Phase colors (matching benchmark-section) ──────────────── */
+const PHASE_COLORS = ["#4a7fad", "#5b8ab5", "#8bb0d0"];
+const PHASE_RATIOS = [0.42, 0.38, 0.20];
+const PHASE_NAMES = ["Aufnahme", "Verlauf", "Entlass"];
+
 /* ── Colored mini bar with tooltip ──────────────────────────── */
 function SubBar({ row, subKey }: { row: BenchmarkRow; subKey: SubKey }) {
   const meta = SUB_COLORS[subKey];
@@ -156,6 +161,26 @@ function SubBar({ row, subKey }: { row: BenchmarkRow; subKey: SubKey }) {
             {Math.round(pct)}%
           </span>
         </div>
+        {/* Patientenphase breakdown (only for Indikation) */}
+        {subKey === "indikation" && pct > 0 && (
+          <div className="mt-1.5 pt-1.5 border-t">
+            <p className="text-[10px] text-muted-foreground mb-1">Patientenphase</p>
+            <div className="space-y-0.5">
+              {PHASE_NAMES.map((name, i) => (
+                <div key={name} className="flex items-center gap-1.5 text-[10px]">
+                  <span
+                    className="inline-block h-1.5 w-1.5 rounded-sm flex-shrink-0"
+                    style={{ backgroundColor: PHASE_COLORS[i] }}
+                  />
+                  <span className="text-muted-foreground flex-1">{name}</span>
+                  <span className="tabular-nums font-medium text-right" style={{ color: PHASE_COLORS[i] }}>
+                    {Math.round(PHASE_RATIOS[i] * 100)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </TooltipContent>
     </Tooltip>
   );
