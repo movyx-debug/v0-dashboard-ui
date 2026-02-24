@@ -41,10 +41,10 @@ const fmtEur = (n: number) =>
 
 /* ── Sub-benchmark meta ──────────────────────────────────────── */
 const SUB_COLORS = {
-  indikation: { color: "#6889b1", label: "Indikation", unit: "%" },
-  multiCaseRate: { color: "#c4965a", label: "MultiCaseRate", unit: "%" },
-  frequenz: { color: "#6fa782", label: "Frequenz", unit: "Tage" },
-  monitorZeit: { color: "#9882b5", label: "Monitorzeit", unit: "Tage" },
+  indikation: { color: "#5b8ab5", label: "Indikation", unit: "%" },
+  multiCaseRate: { color: "#cb7b5a", label: "MultiCaseRate", unit: "%" },
+  frequenz: { color: "#4da8a0", label: "Frequenz", unit: "Tage" },
+  monitorZeit: { color: "#c07a8e", label: "Monitorzeit", unit: "Tage" },
 } as const;
 
 type SubKey = keyof typeof SUB_COLORS;

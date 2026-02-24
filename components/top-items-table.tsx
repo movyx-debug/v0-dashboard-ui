@@ -23,10 +23,10 @@ const fmtEur = (n: number) =>
 
 /* ── Sub-benchmark colors & labels ───────────────────────────── */
 const SUBS = [
-  { key: "indikation_pct" as const, color: "#6889b1", label: "Indikation" },
-  { key: "multiCaseRate_pct" as const, color: "#c4965a", label: "MultiCaseRate" },
-  { key: "frequenz_pct" as const, color: "#6fa782", label: "Frequenz" },
-  { key: "monitorZeit_pct" as const, color: "#9882b5", label: "Monitorzeit" },
+  { key: "indikation_pct" as const, color: "#5b8ab5", label: "Indikation" },
+  { key: "multiCaseRate_pct" as const, color: "#cb7b5a", label: "MultiCaseRate" },
+  { key: "frequenz_pct" as const, color: "#4da8a0", label: "Frequenz" },
+  { key: "monitorZeit_pct" as const, color: "#c07a8e", label: "Monitorzeit" },
 ];
 
 /* ── Stacked bar with hover popup ──────────────────────────── */
