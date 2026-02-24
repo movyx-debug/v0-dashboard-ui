@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import type { AggregatedBenchmark } from "@/lib/benchmark-data";
+import type { AggregatedBenchmark, PatientenPhase } from "@/lib/benchmark-data";
 import {
   Activity,
   Repeat2,
@@ -92,6 +92,7 @@ interface Props {
 }
 
 const ORG_COLORS = ["#2d8a6e", "#5ab896", "#a3d9c4"];
+const PHASE_COLORS = ["#4a7fad", "#5b8ab5", "#8bb0d0"]; // Aufnahme (dark), Verlauf (mid), Entlass (light)
 
 export default function BenchmarkSection({ benchmark, title }: Props) {
   const [openSub, setOpenSub] = useState<SubKey | null>(null);
@@ -212,6 +213,21 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                             }}
                           />
                         </div>
+                        {/* Phase mini bar (only for Indikation) */}
+                        {key === "indikation" && (
+                          <div className="mt-1.5 flex items-center gap-px">
+                            {benchmark.indikation.phasen.map((ph, i) => (
+                              <div
+                                key={ph.name}
+                                className="h-[5px] transition-all duration-500 first:rounded-l-full last:rounded-r-full"
+                                style={{
+                                  width: `${ph.pct}%`,
+                                  backgroundColor: PHASE_COLORS[i],
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </button>
                     </TooltipTrigger>
                     <TooltipContent
@@ -500,6 +516,46 @@ function SubBenchmarkDetail({
             ? `Ihr Wert liegt ${subKey === "frequenz" || subKey === "monitorZeit" ? "unter" : "uber"} dem Benchmark. Hier besteht Optimierungsbedarf.`
             : "Ihr Wert liegt im oder unter dem Benchmark. Kein akuter Handlungsbedarf."}
         </div>
+
+        {/* Patientenphase breakdown (only for Indikation) */}
+        {subKey === "indikation" && (
+          <div className="space-y-2.5">
+            <p className="text-xs font-semibold text-foreground">
+              Verteilung nach Patientenphase
+            </p>
+            {/* Stacked bar */}
+            <div className="flex h-3 w-full rounded-full overflow-hidden">
+              {benchmark.indikation.phasen.map((ph, i) => (
+                <div
+                  key={ph.name}
+                  className="h-full transition-all duration-500 border-r border-white/80 last:border-r-0"
+                  style={{
+                    width: `${ph.pct}%`,
+                    backgroundColor: PHASE_COLORS[i],
+                  }}
+                />
+              ))}
+            </div>
+            {/* Phase legend with values */}
+            <div className="space-y-1.5">
+              {benchmark.indikation.phasen.map((ph, i) => (
+                <div key={ph.name} className="flex items-center gap-2">
+                  <div
+                    className="h-2.5 w-2.5 rounded-sm flex-shrink-0"
+                    style={{ backgroundColor: PHASE_COLORS[i] }}
+                  />
+                  <span className="text-xs text-muted-foreground flex-1">{ph.name}</span>
+                  <span className="text-xs font-semibold text-foreground tabular-nums">
+                    {fmtInt(ph.analysen)} Analysen
+                  </span>
+                  <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">
+                    {Math.round(ph.pct)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation between sub-benchmarks */}
