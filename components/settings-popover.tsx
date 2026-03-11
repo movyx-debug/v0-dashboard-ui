@@ -44,7 +44,6 @@ const SETTINGS = [
       { value: "gkv", label: "GKV" },
       { value: "pkv", label: "PKV" },
       { value: "gkv+pkv", label: "GKV + PKV" },
-      { value: "alle", label: "Alle" },
     ],
     defaultValue: "gkv",
   },
