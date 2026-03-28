@@ -43,6 +43,25 @@ export interface PatientenPhase {
   analysen: number;
 }
 
+export interface SubBenchmark {
+  analysen: number;
+  pct: number;
+  kunde: number;
+  benchmark: number;
+}
+
+export interface IntensitaetBenchmark extends SubBenchmark {
+  /** Anforderungen pro indiziertem Fall */
+  anforderungenProIndFall_kunde: number;
+  anforderungenProIndFall_benchmark: number;
+  /** Sub-components of Intensitaet */
+  subHebel: {
+    multiCaseRate: SubBenchmark;
+    frequenz: SubBenchmark;
+    monitorZeit: SubBenchmark;
+  };
+}
+
 export interface AggregatedBenchmark {
   analysen_pro_fall_kunde: number;
   analysen_pro_fall_benchmark: number;
@@ -56,11 +75,13 @@ export interface AggregatedBenchmark {
   total_faelle: number;
   /** Benchmark-side analysen (faelle * a/f benchmark) */
   benchmark_analysen: number;
-  // sub-benchmarks
+  // Main levers (2 Haupthebel)
   indikation: { analysen: number; pct: number; kunde: number; benchmark: number; phasen: PatientenPhase[] };
-  multiCaseRate: { analysen: number; pct: number; kunde: number; benchmark: number };
-  frequenz: { analysen: number; pct: number; kunde: number; benchmark: number };
-  monitorZeit: { analysen: number; pct: number; kunde: number; benchmark: number };
+  intensitaet: IntensitaetBenchmark;
+  // Legacy sub-benchmarks (still used for detail tables)
+  multiCaseRate: SubBenchmark;
+  frequenz: SubBenchmark;
+  monitorZeit: SubBenchmark;
   // org unit distribution
   orgUnits: OrgUnitShare[];
 }
@@ -338,6 +359,36 @@ export function aggregateBenchmark(
         { name: "Entlass", pct: 20, analysen: Math.round(pot_indikation * 0.20) },
       ],
     },
+    // Intensitaet = MultiCaseRate + Frequenz + Monitorzeit combined
+    intensitaet: {
+      analysen: pot_multiCase + pot_frequenz + pot_span,
+      pct: pot_total > 0 ? ((pot_multiCase + pot_frequenz + pot_span) / pot_total) * 100 : 0,
+      kunde: avg((r) => r.analysen_pro_fall_kunde),
+      benchmark: avg((r) => r.analysen_pro_fall_benchmark),
+      anforderungenProIndFall_kunde: avg((r) => r.analysen_pro_fall_kunde),
+      anforderungenProIndFall_benchmark: avg((r) => r.analysen_pro_fall_benchmark),
+      subHebel: {
+        multiCaseRate: {
+          analysen: pot_multiCase,
+          pct: (pot_multiCase + pot_frequenz + pot_span) > 0 ? (pot_multiCase / (pot_multiCase + pot_frequenz + pot_span)) * 100 : 0,
+          kunde: avg((r) => r.multiCaseRate) * 100,
+          benchmark: avg((r) => r.multiCaseRate_benchmark) * 100,
+        },
+        frequenz: {
+          analysen: pot_frequenz,
+          pct: (pot_multiCase + pot_frequenz + pot_span) > 0 ? (pot_frequenz / (pot_multiCase + pot_frequenz + pot_span)) * 100 : 0,
+          kunde: avg((r) => r.frequenz_tage_kunde),
+          benchmark: avg((r) => r.frequenz_tage_benchmark),
+        },
+        monitorZeit: {
+          analysen: pot_span,
+          pct: (pot_multiCase + pot_frequenz + pot_span) > 0 ? (pot_span / (pot_multiCase + pot_frequenz + pot_span)) * 100 : 0,
+          kunde: avg((r) => r.span_kunde),
+          benchmark: avg((r) => r.span_benchmark),
+        },
+      },
+    },
+    // Legacy sub-benchmarks (still used for detail tables)
     multiCaseRate: {
       analysen: pot_multiCase,
       pct: pot_total > 0 ? (pot_multiCase / pot_total) * 100 : 0,

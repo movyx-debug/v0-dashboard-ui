@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import type { AggregatedBenchmark, PatientenPhase } from "@/lib/benchmark-data";
+import type { AggregatedBenchmark, PatientenPhase, SubBenchmark } from "@/lib/benchmark-data";
 import {
   Activity,
   Repeat2,
@@ -10,6 +10,7 @@ import {
   TrendingDown,
   TrendingUp,
   ArrowRight,
+  Layers,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
@@ -35,22 +36,37 @@ const fmtDe = (n: number, dec = 2) =>
 const fmtPct = (n: number) => `${Math.round(n)}%`;
 const fmtInt = (n: number) => Math.round(n).toLocaleString("de-DE");
 
-const SUB_META = {
+// 2 Haupthebel
+const HAUPT_META = {
   indikation: {
     color: "#5b8ab5",
     bgLight: "rgba(91,138,181,0.08)",
     icon: Activity,
     label: "Indikation",
-    desc: "Wird der Parameter bei zu vielen Patienten angefordert?",
+    desc: "Anteil der Falle mit initialer Laboranforderung",
     longDesc:
       "Vergleich der Indikationsquote: In wie viel Prozent der Falle wird der Parameter initial angefordert? Ein hoherer Wert als der Benchmark kann darauf hindeuten, dass der Parameter bei zu vielen Patienten routinemassig bestellt wird.",
     unit: "%",
   },
+  intensitaet: {
+    color: "#7a6ba0",
+    bgLight: "rgba(122,107,160,0.08)",
+    icon: Layers,
+    label: "Intensitat",
+    desc: "Anforderungen pro indiziertem Fall",
+    longDesc:
+      "Die Intensitat beschreibt, wie viele Anforderungen pro indiziertem Fall erfolgen. Dieser Hebel setzt sich zusammen aus der Monitorfallrate (wie viele Falle ins Monitoring gehen), der Frequenz (wie haufig nachbestellt wird) und der Monitorzeit (wie lange das Monitoring dauert).",
+    unit: "A/F",
+  },
+} as const;
+
+// Sub-Hebel der Intensitat
+const INTENSITAET_SUB_META = {
   multiCaseRate: {
     color: "#cb7b5a",
     bgLight: "rgba(203,123,90,0.08)",
     icon: Repeat2,
-    label: "MultiCaseRate",
+    label: "Monitorfallrate",
     desc: "Gehen zu viele Falle ins Monitoring?",
     longDesc:
       "Vergleich der MultiCaseRate: Welcher Anteil der Falle mit Erstanforderung wird wiederholt untersucht (Monitoring)? Ein hoherer Wert bedeutet, dass mehr Patienten als notig ins Monitoring gehen.",
@@ -78,13 +94,10 @@ const SUB_META = {
   },
 } as const;
 
-type SubKey = keyof typeof SUB_META;
-const SUB_KEYS: SubKey[] = [
-  "indikation",
-  "multiCaseRate",
-  "frequenz",
-  "monitorZeit",
-];
+type HauptKey = keyof typeof HAUPT_META;
+type IntensitaetSubKey = keyof typeof INTENSITAET_SUB_META;
+const HAUPT_KEYS: HauptKey[] = ["indikation", "intensitaet"];
+const INTENSITAET_SUB_KEYS: IntensitaetSubKey[] = ["multiCaseRate", "frequenz", "monitorZeit"];
 
 interface Props {
   benchmark: AggregatedBenchmark;
@@ -95,7 +108,7 @@ const ORG_COLORS = ["#2d8a6e", "#5ab896", "#a3d9c4"];
 const PHASE_COLORS = ["#4a7fad", "#5b8ab5", "#8bb0d0"]; // Aufnahme (dark), Verlauf (mid), Entlass (light)
 
 export default function BenchmarkSection({ benchmark, title }: Props) {
-  const [openSub, setOpenSub] = useState<SubKey | null>(null);
+  const [openHaupt, setOpenHaupt] = useState<HauptKey | null>(null);
 
   // Key for donut animation: changes whenever data changes, triggering re-mount
   const donutKey = useMemo(
@@ -163,23 +176,23 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           {/* ── Divider ────────────────────────────────────── */}
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
-          {/* ── CENTER: 4 clickable sub-benchmark tiles ───── */}
-          <div className="flex-1 min-w-0">
+          {/* ── CENTER: 2 clickable Haupthebel tiles ───── */}
+          <div className="flex-shrink-0">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Potenzial-Hebel
             </p>
-            <div className="grid grid-cols-4 gap-2">
-              {SUB_KEYS.map((key) => {
-                const sub = benchmark[key];
-                const meta = SUB_META[key];
+            <div className="grid grid-cols-2 gap-3">
+              {HAUPT_KEYS.map((key) => {
+                const sub = key === "indikation" ? benchmark.indikation : benchmark.intensitaet;
+                const meta = HAUPT_META[key];
                 const Icon = meta.icon;
                 return (
                   <Tooltip key={key}>
                     <TooltipTrigger asChild>
                       <button
                         type="button"
-                        onClick={() => setOpenSub(key)}
-                        className="group relative rounded-xl border bg-card px-3 py-2.5 text-left transition-all hover:shadow-md hover:border-foreground/20 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={() => setOpenHaupt(key)}
+                        className="group relative rounded-xl border bg-card px-4 py-3 text-left transition-all hover:shadow-md hover:border-foreground/20 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[140px]"
                       >
                         {/* Colored top accent line */}
                         <div
@@ -188,23 +201,23 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                         />
                         <div className="flex items-center gap-1.5 mb-1">
                           <Icon
-                            className="h-3 w-3 flex-shrink-0"
+                            className="h-3.5 w-3.5 flex-shrink-0"
                             style={{ color: meta.color }}
                           />
-                          <span className="text-[10px] text-muted-foreground truncate">
+                          <span className="text-[11px] text-muted-foreground truncate">
                             {meta.label}
                           </span>
                         </div>
                         <div className="flex items-baseline gap-1">
                           <span
-                            className="text-lg font-bold leading-none tabular-nums"
+                            className="text-xl font-bold leading-none tabular-nums"
                             style={{ color: meta.color }}
                           >
                             {fmtPct(sub.pct)}
                           </span>
                         </div>
                         {/* Mini progress bar */}
-                        <div className="mt-1.5 h-1 rounded-full bg-secondary overflow-hidden">
+                        <div className="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-500"
                             style={{
@@ -228,11 +241,30 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                             ))}
                           </div>
                         )}
+                        {/* Sub-hebel mini bar (only for Intensitat) */}
+                        {key === "intensitaet" && (
+                          <div className="mt-1.5 flex items-center gap-px">
+                            {INTENSITAET_SUB_KEYS.map((subKey) => {
+                              const subHebel = benchmark.intensitaet.subHebel[subKey];
+                              const subMeta = INTENSITAET_SUB_META[subKey];
+                              return (
+                                <div
+                                  key={subKey}
+                                  className="h-[5px] transition-all duration-500 first:rounded-l-full last:rounded-r-full"
+                                  style={{
+                                    width: `${subHebel.pct}%`,
+                                    backgroundColor: subMeta.color,
+                                  }}
+                                />
+                              );
+                            })}
+                          </div>
+                        )}
                       </button>
                     </TooltipTrigger>
                     <TooltipContent
                       side="bottom"
-                      className="bg-card text-foreground border shadow-lg p-3 max-w-[200px]"
+                      className="bg-card text-foreground border shadow-lg p-3 max-w-[220px]"
                     >
                       <p className="text-xs text-muted-foreground mb-1">
                         {meta.desc}
@@ -363,17 +395,17 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
 
       {/* ── Detail Dialog ──────────────────────────────────── */}
       <Dialog
-        open={openSub !== null}
+        open={openHaupt !== null}
         onOpenChange={(open) => {
-          if (!open) setOpenSub(null);
+          if (!open) setOpenHaupt(null);
         }}
       >
-        <DialogContent className="sm:max-w-md">
-          {openSub && (
-            <SubBenchmarkDetail
-              subKey={openSub}
+        <DialogContent className="sm:max-w-lg">
+          {openHaupt && (
+            <HauptHebelDetail
+              hauptKey={openHaupt}
               benchmark={benchmark}
-              onNavigate={(key) => setOpenSub(key)}
+              onNavigate={(key) => setOpenHaupt(key)}
             />
           )}
         </DialogContent>
@@ -382,32 +414,27 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
   );
 }
 
-/* ── Sub-Benchmark Detail Dialog Content ─────────────────────────────── */
+/* ── Haupthebel Detail Dialog Content ─────────────────────────────── */
 
-function SubBenchmarkDetail({
-  subKey,
+function HauptHebelDetail({
+  hauptKey,
   benchmark,
   onNavigate,
 }: {
-  subKey: SubKey;
+  hauptKey: HauptKey;
   benchmark: AggregatedBenchmark;
-  onNavigate: (key: SubKey) => void;
+  onNavigate: (key: HauptKey) => void;
 }) {
-  const meta = SUB_META[subKey];
-  const sub = benchmark[subKey];
+  const meta = HAUPT_META[hauptKey];
+  const sub = hauptKey === "indikation" ? benchmark.indikation : benchmark.intensitaet;
   const Icon = meta.icon;
 
-  const isWorse =
-    subKey === "frequenz" || subKey === "monitorZeit"
-      ? sub.kunde < sub.benchmark
-      : sub.kunde > sub.benchmark;
-
+  const isWorse = sub.kunde > sub.benchmark;
   const maxVal = Math.max(sub.kunde, sub.benchmark, 0.01);
 
-  const currentIdx = SUB_KEYS.indexOf(subKey);
-  const prevKey = currentIdx > 0 ? SUB_KEYS[currentIdx - 1] : null;
-  const nextKey =
-    currentIdx < SUB_KEYS.length - 1 ? SUB_KEYS[currentIdx + 1] : null;
+  const currentIdx = HAUPT_KEYS.indexOf(hauptKey);
+  const prevKey = currentIdx > 0 ? HAUPT_KEYS[currentIdx - 1] : null;
+  const nextKey = currentIdx < HAUPT_KEYS.length - 1 ? HAUPT_KEYS[currentIdx + 1] : null;
 
   return (
     <>
@@ -467,9 +494,7 @@ function SubBenchmarkDetail({
             <span
               className="font-bold"
               style={{
-                color: isWorse
-                  ? "hsl(var(--destructive))"
-                  : "hsl(var(--primary))",
+                color: isWorse ? "hsl(var(--destructive))" : "hsl(var(--primary))",
               }}
             >
               {fmtDe(sub.kunde)} {meta.unit}
@@ -480,9 +505,7 @@ function SubBenchmarkDetail({
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${(sub.kunde / maxVal) * 100}%`,
-                backgroundColor: isWorse
-                  ? "hsl(var(--destructive))"
-                  : meta.color,
+                backgroundColor: isWorse ? "hsl(var(--destructive))" : meta.color,
               }}
             />
           </div>
@@ -498,9 +521,7 @@ function SubBenchmarkDetail({
           <div className="h-3 rounded-full bg-secondary overflow-hidden">
             <div
               className="h-full rounded-full bg-foreground/30 transition-all duration-500"
-              style={{
-                width: `${(sub.benchmark / maxVal) * 100}%`,
-              }}
+              style={{ width: `${(sub.benchmark / maxVal) * 100}%` }}
             />
           </div>
         </div>
@@ -513,30 +534,25 @@ function SubBenchmarkDetail({
           }`}
         >
           {isWorse
-            ? `Ihr Wert liegt ${subKey === "frequenz" || subKey === "monitorZeit" ? "unter" : "uber"} dem Benchmark. Hier besteht Optimierungsbedarf.`
+            ? "Ihr Wert liegt uber dem Benchmark. Hier besteht Optimierungsbedarf."
             : "Ihr Wert liegt im oder unter dem Benchmark. Kein akuter Handlungsbedarf."}
         </div>
 
         {/* Patientenphase breakdown (only for Indikation) */}
-        {subKey === "indikation" && (
+        {hauptKey === "indikation" && (
           <div className="space-y-2.5">
             <p className="text-xs font-semibold text-foreground">
               Verteilung nach Patientenphase
             </p>
-            {/* Stacked bar */}
             <div className="flex h-3 w-full rounded-full overflow-hidden">
               {benchmark.indikation.phasen.map((ph, i) => (
                 <div
                   key={ph.name}
                   className="h-full transition-all duration-500 border-r border-white/80 last:border-r-0"
-                  style={{
-                    width: `${ph.pct}%`,
-                    backgroundColor: PHASE_COLORS[i],
-                  }}
+                  style={{ width: `${ph.pct}%`, backgroundColor: PHASE_COLORS[i] }}
                 />
               ))}
             </div>
-            {/* Phase legend with values */}
             <div className="space-y-1.5">
               {benchmark.indikation.phasen.map((ph, i) => (
                 <div key={ph.name} className="flex items-center gap-2">
@@ -556,9 +572,65 @@ function SubBenchmarkDetail({
             </div>
           </div>
         )}
+
+        {/* Sub-Hebel breakdown (only for Intensitat) */}
+        {hauptKey === "intensitaet" && (
+          <div className="space-y-2.5">
+            <p className="text-xs font-semibold text-foreground">
+              Zusammensetzung der Intensitat
+            </p>
+            {/* Stacked bar */}
+            <div className="flex h-3 w-full rounded-full overflow-hidden">
+              {INTENSITAET_SUB_KEYS.map((subKey) => {
+                const subHebel = benchmark.intensitaet.subHebel[subKey];
+                const subMeta = INTENSITAET_SUB_META[subKey];
+                return (
+                  <div
+                    key={subKey}
+                    className="h-full transition-all duration-500 border-r border-white/80 last:border-r-0"
+                    style={{ width: `${subHebel.pct}%`, backgroundColor: subMeta.color }}
+                  />
+                );
+              })}
+            </div>
+            {/* Sub-Hebel legend with values */}
+            <div className="space-y-2">
+              {INTENSITAET_SUB_KEYS.map((subKey) => {
+                const subHebel = benchmark.intensitaet.subHebel[subKey];
+                const subMeta = INTENSITAET_SUB_META[subKey];
+                const SubIcon = subMeta.icon;
+                const subIsWorse = subKey === "frequenz" || subKey === "monitorZeit"
+                  ? subHebel.kunde < subHebel.benchmark
+                  : subHebel.kunde > subHebel.benchmark;
+                return (
+                  <div key={subKey} className="rounded-lg border p-2.5" style={{ borderColor: `${subMeta.color}25` }}>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <SubIcon className="h-3.5 w-3.5" style={{ color: subMeta.color }} />
+                      <span className="text-xs font-medium text-foreground flex-1">{subMeta.label}</span>
+                      <span className="text-xs font-bold tabular-nums" style={{ color: subMeta.color }}>
+                        {Math.round(subHebel.pct)}%
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mb-1.5">{subMeta.desc}</p>
+                    <div className="flex items-center gap-3 text-[11px]">
+                      <span className="text-muted-foreground">
+                        Kunde: <span className={`font-semibold ${subIsWorse ? "text-destructive" : "text-foreground"}`}>
+                          {fmtDe(subHebel.kunde)} {subMeta.unit}
+                        </span>
+                      </span>
+                      <span className="text-muted-foreground">
+                        Benchmark: <span className="font-semibold text-foreground">{fmtDe(subHebel.benchmark)} {subMeta.unit}</span>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Navigation between sub-benchmarks */}
+      {/* Navigation between Haupthebel */}
       <div className="flex items-center justify-between pt-1 border-t">
         {prevKey ? (
           <button
@@ -566,29 +638,21 @@ function SubBenchmarkDetail({
             onClick={() => onNavigate(prevKey)}
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
-            <div
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: SUB_META[prevKey].color }}
-            />
-            {SUB_META[prevKey].label}
+            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: HAUPT_META[prevKey].color }} />
+            {HAUPT_META[prevKey].label}
           </button>
         ) : (
           <div />
         )}
         <div className="flex gap-1">
-          {SUB_KEYS.map((k) => (
+          {HAUPT_KEYS.map((k) => (
             <button
               type="button"
               key={k}
               onClick={() => onNavigate(k)}
-              className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                k === subKey ? "w-4" : "w-1.5"
-              }`}
-              style={{
-                backgroundColor:
-                  k === subKey ? SUB_META[k].color : "hsl(var(--border))",
-              }}
-              aria-label={SUB_META[k].label}
+              className={`h-1.5 rounded-full transition-all cursor-pointer ${k === hauptKey ? "w-4" : "w-1.5"}`}
+              style={{ backgroundColor: k === hauptKey ? HAUPT_META[k].color : "hsl(var(--border))" }}
+              aria-label={HAUPT_META[k].label}
             />
           ))}
         </div>
@@ -598,11 +662,8 @@ function SubBenchmarkDetail({
             onClick={() => onNavigate(nextKey)}
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
-            {SUB_META[nextKey].label}
-            <div
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: SUB_META[nextKey].color }}
-            />
+            {HAUPT_META[nextKey].label}
+            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: HAUPT_META[nextKey].color }} />
           </button>
         ) : (
           <div />
