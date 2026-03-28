@@ -317,28 +317,13 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 <span className="text-base font-bold tabular-nums text-primary text-right">{fmtDe(benchmark.analysen_pro_fall_benchmark)}</span>
               </div>
 
-              {/* Divider */}
-              <div className="h-14 w-px bg-border flex-shrink-0 mt-3" />
-
-              {/* Einsparung */}
-              <div className="mt-3">
-                <p className="text-[10px] text-muted-foreground">Einsparung</p>
-                <p className="text-sm font-bold text-primary tabular-nums leading-tight mt-0.5">
-                  {fmtInt(benchmark.hauptpot_net_analysen)} Analysen
-                </p>
-                <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
-                  {benchmark.total_analysen > 0
-                    ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100)
-                    : "0%"} der Gesamtanalysen
-                </p>
-              </div>
             </div>
           </div>
 
           {/* ── Divider ────────────────────────────────────── */}
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
-          {/* ── FAR RIGHT: Org Unit Donut ──────────────────── */}
+          {/* ── FAR RIGHT: Org Unit Donut ─────────────────���── */}
           <div className="flex-shrink-0 w-fit">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Organisationseinheit
