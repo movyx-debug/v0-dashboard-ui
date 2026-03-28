@@ -157,14 +157,19 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 {fmtPct(Math.abs(diffPct))}
               </span>
             </div>
-            <div className="mt-1.5 text-[10px] tabular-nums text-muted-foreground flex items-center gap-2">
-              <span>{fmtInt(benchmark.hauptpot_net_analysen)} Analysen</span>
-              <span className="text-muted-foreground/30">|</span>
-              <span className="text-primary">{benchmark.total_analysen > 0 ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100) : "0%"}</span>
-              <span className="text-muted-foreground/30">|</span>
-              <span className="text-muted-foreground/60">{fmtInt(Math.round(benchmark.hauptpot_brut_euro))} Brutto</span>
-              <span className="text-muted-foreground/30">|</span>
-              <span className="text-red-400/70">-{fmtInt(Math.round(benchmark.erlosverlust_euro))} Erlos</span>
+            <div className="mt-1.5 space-y-0 text-[10px] tabular-nums">
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground/70">Brutto</span>
+                <span className="text-muted-foreground">{fmtInt(Math.round(benchmark.hauptpot_brut_euro))} EUR</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-red-400/60">Erlosverluste</span>
+                <span className="text-red-400/80">-{fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-primary/70">Analysen</span>
+                <span className="text-primary">{fmtInt(benchmark.hauptpot_net_analysen)} ({benchmark.total_analysen > 0 ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100) : "0%"})</span>
+              </div>
             </div>
           </div>
 
