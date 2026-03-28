@@ -49,8 +49,8 @@ const HAUPT_META = {
     unit: "%",
   },
   intensitaet: {
-    color: "#e07a3d",
-    bgLight: "rgba(224,122,61,0.08)",
+    color: "#cf8a3e",
+    bgLight: "rgba(207,138,62,0.08)",
     icon: Layers,
     label: "Intensitat",
     desc: "Anforderungen pro indiziertem Fall",
