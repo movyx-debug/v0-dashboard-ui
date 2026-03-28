@@ -157,17 +157,22 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 {fmtPct(Math.abs(diffPct))}
               </span>
             </div>
-            <div className="mt-2 space-y-0.5 text-[11px]">
-              <div className="flex items-center justify-between gap-4 tabular-nums">
-                <span className="text-muted-foreground/70">Einsparung</span>
-                <span className="text-muted-foreground">
-                  {fmtInt(Math.round(benchmark.hauptpot_brut_euro))} EUR
-                </span>
+            <div className="mt-2 flex items-center gap-4 text-[11px] tabular-nums">
+              <div className="flex items-center gap-1.5">
+                <span className="text-muted-foreground/70">Brutto</span>
+                <span className="text-muted-foreground">{fmtInt(Math.round(benchmark.hauptpot_brut_euro))} EUR</span>
               </div>
-              <div className="flex items-center justify-between gap-4 tabular-nums">
-                <span className="text-red-400/60">Erlosverluste</span>
-                <span className="text-red-400/80">
-                  -{fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR
+              <div className="flex items-center gap-1.5">
+                <span className="text-red-400/60">Erlos</span>
+                <span className="text-red-400/80">-{fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-primary/60">Analysen</span>
+                <span className="text-primary font-medium">
+                  {fmtInt(benchmark.hauptpot_net_analysen)}
+                  <span className="text-primary/60 font-normal ml-0.5">
+                    ({benchmark.total_analysen > 0 ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100) : "0%"})
+                  </span>
                 </span>
               </div>
             </div>
