@@ -91,6 +91,8 @@ type IntensitaetSubKey = keyof typeof INTENSITAET_SUB_META;
 const HAUPT_KEYS: HauptKey[] = ["indikation", "intensitaet"];
 const INTENSITAET_SUB_KEYS: IntensitaetSubKey[] = ["multiCaseRate", "frequenz", "monitorZeit"];
 
+const PHASE_COLORS = ["#4a7fad", "#5b8ab5", "#8bb0d0"]; // Aufnahme (dark), Verlauf (mid), Entlass (light)
+
 interface Props {
   benchmark: AggregatedBenchmark;
   title: string;
