@@ -229,11 +229,14 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     <button
                       type="button"
                       onClick={() => {
-                        // Toggle: wenn Intensitaet aktiv (egal ob mit oder ohne Sub-Hebel), dann deaktivieren
-                        if (activeHaupt === "intensitaet") {
-                          setActiveHaupt(null);
+                        // Wenn Sub-Hebel aktiv: Sub-Hebel deaktivieren, Intensitaet bleibt aktiv
+                        if (activeSubHebel) {
                           setActiveSubHebel(null);
+                        } else if (activeHaupt === "intensitaet") {
+                          // Wenn nur Intensitaet aktiv (ohne Sub-Hebel): alles deaktivieren
+                          setActiveHaupt(null);
                         } else {
+                          // Wenn nichts oder Indikation aktiv: Intensitaet aktivieren
                           setActiveHaupt("intensitaet");
                           setActiveSubHebel(null);
                         }
@@ -298,12 +301,13 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                             }}
                             className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[10px] transition-all cursor-pointer ${
                               isActive 
-                                ? "text-white ring-1 ring-offset-1" 
+                                ? "ring-1 ring-offset-1 font-semibold" 
                                 : "bg-card text-muted-foreground"
                             }`}
                             style={{
-                              backgroundColor: isActive ? subMeta.color : undefined,
+                              backgroundColor: isActive ? `${subMeta.color}20` : undefined,
                               borderColor: isActive ? subMeta.color : undefined,
+                              color: isActive ? subMeta.color : undefined,
                               // @ts-expect-error CSS custom property
                               "--tw-ring-color": subMeta.color,
                             }}
