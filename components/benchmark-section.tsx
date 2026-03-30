@@ -179,15 +179,34 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                       setActiveHaupt(activeHaupt === "indikation" ? null : "indikation");
                       setActiveSubHebel(null);
                     }}
-                    className={`group relative rounded-xl border bg-card px-4 py-3 text-left transition-all hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px] ${
-                      activeHaupt === "indikation" ? "ring-2 ring-offset-1" : "hover:border-foreground/20"
+                    className={`group relative rounded-xl border px-4 py-3 text-left transition-all cursor-pointer focus:outline-none min-w-[120px] ${
+                      activeHaupt === "indikation" 
+                        ? "ring-2 ring-offset-2 shadow-md" 
+                        : "bg-card hover:shadow-md"
                     }`}
-                    style={activeHaupt === "indikation" ? { borderColor: HAUPT_META.indikation.color } : {}}
+                    style={{
+                      borderColor: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined,
+                      backgroundColor: activeHaupt === "indikation" ? `${HAUPT_META.indikation.color}12` : undefined,
+                      // @ts-expect-error CSS custom property
+                      "--tw-ring-color": HAUPT_META.indikation.color,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (activeHaupt !== "indikation") {
+                        e.currentTarget.style.backgroundColor = `${HAUPT_META.indikation.color}08`;
+                        e.currentTarget.style.borderColor = `${HAUPT_META.indikation.color}50`;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (activeHaupt !== "indikation") {
+                        e.currentTarget.style.backgroundColor = "";
+                        e.currentTarget.style.borderColor = "";
+                      }
+                    }}
                   >
                     <div className="absolute top-0 left-3 right-3 h-[2px] rounded-full" style={{ backgroundColor: HAUPT_META.indikation.color }} />
                     <div className="flex items-center gap-1.5 mb-1">
                       <Activity className="h-3.5 w-3.5 flex-shrink-0" style={{ color: HAUPT_META.indikation.color }} />
-                      <span className="text-[11px] text-muted-foreground">Indikation</span>
+                      <span className={`text-[11px] ${activeHaupt === "indikation" ? "text-foreground font-medium" : "text-muted-foreground"}`}>Indikation</span>
                     </div>
                     <span className="text-xl font-bold tabular-nums" style={{ color: HAUPT_META.indikation.color }}>
                       {fmtPct(benchmark.indikation.pct)}
@@ -210,18 +229,43 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     <button
                       type="button"
                       onClick={() => {
-                        setActiveHaupt(activeHaupt === "intensitaet" ? null : "intensitaet");
-                        setActiveSubHebel(null);
+                        // Toggle: wenn Intensitaet aktiv (egal ob mit oder ohne Sub-Hebel), dann deaktivieren
+                        if (activeHaupt === "intensitaet") {
+                          setActiveHaupt(null);
+                          setActiveSubHebel(null);
+                        } else {
+                          setActiveHaupt("intensitaet");
+                          setActiveSubHebel(null);
+                        }
                       }}
-                      className={`group relative rounded-xl border bg-card px-4 py-3 text-left transition-all hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px] ${
-                        activeHaupt === "intensitaet" && !activeSubHebel ? "ring-2 ring-offset-1" : "hover:border-foreground/20"
+                      className={`group relative rounded-xl border px-4 py-3 text-left transition-all cursor-pointer focus:outline-none min-w-[120px] ${
+                        activeHaupt === "intensitaet" && !activeSubHebel
+                          ? "ring-2 ring-offset-2 shadow-md" 
+                          : "bg-card hover:shadow-md"
                       }`}
-                      style={activeHaupt === "intensitaet" && !activeSubHebel ? { borderColor: HAUPT_META.intensitaet.color } : {}}
+                      style={{
+                        borderColor: activeHaupt === "intensitaet" && !activeSubHebel ? HAUPT_META.intensitaet.color : undefined,
+                        backgroundColor: activeHaupt === "intensitaet" && !activeSubHebel ? `${HAUPT_META.intensitaet.color}12` : undefined,
+                        // @ts-expect-error CSS custom property
+                        "--tw-ring-color": HAUPT_META.intensitaet.color,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!(activeHaupt === "intensitaet" && !activeSubHebel)) {
+                          e.currentTarget.style.backgroundColor = `${HAUPT_META.intensitaet.color}08`;
+                          e.currentTarget.style.borderColor = `${HAUPT_META.intensitaet.color}50`;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!(activeHaupt === "intensitaet" && !activeSubHebel)) {
+                          e.currentTarget.style.backgroundColor = "";
+                          e.currentTarget.style.borderColor = "";
+                        }
+                      }}
                     >
                       <div className="absolute top-0 left-3 right-3 h-[2px] rounded-full" style={{ backgroundColor: HAUPT_META.intensitaet.color }} />
                       <div className="flex items-center gap-1.5 mb-1">
                         <Layers className="h-3.5 w-3.5 flex-shrink-0" style={{ color: HAUPT_META.intensitaet.color }} />
-                        <span className="text-[11px] text-muted-foreground">Intensitat</span>
+                        <span className={`text-[11px] ${activeHaupt === "intensitaet" && !activeSubHebel ? "text-foreground font-medium" : "text-muted-foreground"}`}>Intensitat</span>
                       </div>
                       <span className="text-xl font-bold tabular-nums" style={{ color: HAUPT_META.intensitaet.color }}>
                         {fmtPct(benchmark.intensitaet.pct)}
@@ -253,9 +297,30 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                               setActiveSubHebel(isActive ? null : subKey);
                             }}
                             className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[10px] transition-all cursor-pointer ${
-                              isActive ? "text-white border-transparent" : "bg-card text-muted-foreground hover:border-foreground/20"
+                              isActive 
+                                ? "text-white ring-1 ring-offset-1" 
+                                : "bg-card text-muted-foreground"
                             }`}
-                            style={isActive ? { backgroundColor: subMeta.color } : {}}
+                            style={{
+                              backgroundColor: isActive ? subMeta.color : undefined,
+                              borderColor: isActive ? subMeta.color : undefined,
+                              // @ts-expect-error CSS custom property
+                              "--tw-ring-color": subMeta.color,
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isActive) {
+                                e.currentTarget.style.backgroundColor = `${subMeta.color}15`;
+                                e.currentTarget.style.borderColor = `${subMeta.color}60`;
+                                e.currentTarget.style.color = subMeta.color;
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isActive) {
+                                e.currentTarget.style.backgroundColor = "";
+                                e.currentTarget.style.borderColor = "";
+                                e.currentTarget.style.color = "";
+                              }
+                            }}
                           >
                             <SubIcon className="h-3 w-3" />
                             <span className="font-medium tabular-nums">{Math.round(subHebel.pct)}%</span>
@@ -280,7 +345,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           <div className="flex-1 min-w-[280px] max-w-[400px]">
             {/* Default: Analysen pro Fall */}
             {!activeHaupt && (
-              <div>
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-3 transition-all">
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-1.5">
                   Analysen pro Fall
                 </p>
@@ -298,7 +363,13 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
 
             {/* Indikation selected */}
             {activeHaupt === "indikation" && (
-              <div>
+              <div 
+                className="rounded-lg border-l-[3px] p-3 transition-all"
+                style={{ 
+                  borderLeftColor: HAUPT_META.indikation.color,
+                  backgroundColor: `${HAUPT_META.indikation.color}08`,
+                }}
+              >
                 <div className="flex items-center gap-2 mb-1.5">
                   <Activity className="h-4 w-4" style={{ color: HAUPT_META.indikation.color }} />
                   <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: HAUPT_META.indikation.color }}>
@@ -324,7 +395,13 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
 
             {/* Intensitat selected (no sub-hebel active) */}
             {activeHaupt === "intensitaet" && !activeSubHebel && (
-              <div>
+              <div 
+                className="rounded-lg border-l-[3px] p-3 transition-all"
+                style={{ 
+                  borderLeftColor: HAUPT_META.intensitaet.color,
+                  backgroundColor: `${HAUPT_META.intensitaet.color}08`,
+                }}
+              >
                 <div className="flex items-center gap-2 mb-1.5">
                   <Layers className="h-4 w-4" style={{ color: HAUPT_META.intensitaet.color }} />
                   <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: HAUPT_META.intensitaet.color }}>
@@ -350,7 +427,13 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
 
             {/* Sub-Hebel selected */}
             {activeSubHebel && (
-              <div>
+              <div 
+                className="rounded-lg border-l-[3px] p-3 transition-all"
+                style={{ 
+                  borderLeftColor: INTENSITAET_SUB_META[activeSubHebel].color,
+                  backgroundColor: `${INTENSITAET_SUB_META[activeSubHebel].color}08`,
+                }}
+              >
                 <div className="flex items-center gap-2 mb-1.5">
                   {React.createElement(INTENSITAET_SUB_META[activeSubHebel].icon, {
                     className: "h-4 w-4",
