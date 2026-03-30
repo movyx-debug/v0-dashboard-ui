@@ -202,8 +202,8 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 </TooltipContent>
               </Tooltip>
 
-              {/* Intensitat group (Haupthebel + 3 Sub-Hebel) */}
-              <div className="flex flex-col gap-1">
+              {/* Intensitat group (Haupthebel + 3 Sub-Hebel rechts daneben) */}
+              <div className="flex items-stretch gap-1.5">
                 {/* Intensitat main tile */}
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -236,10 +236,8 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                   </TooltipContent>
                 </Tooltip>
 
-                {/* 3 Sub-Hebel (connected visually to Intensitat) */}
-                <div className="flex gap-1 pl-2 relative">
-                  {/* Connector line */}
-                  <div className="absolute -top-1 left-0 w-2 h-3 border-l-2 border-b-2 rounded-bl-md" style={{ borderColor: `${HAUPT_META.intensitaet.color}40` }} />
+                {/* 3 Sub-Hebel (stacked vertically, right of Intensitat) */}
+                <div className="flex flex-col justify-center gap-0.5">
                   {INTENSITAET_SUB_KEYS.map((subKey) => {
                     const subHebel = benchmark.intensitaet.subHebel[subKey];
                     const subMeta = INTENSITAET_SUB_META[subKey];
@@ -254,7 +252,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                               setActiveHaupt("intensitaet");
                               setActiveSubHebel(isActive ? null : subKey);
                             }}
-                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] transition-all cursor-pointer ${
+                            className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[10px] transition-all cursor-pointer ${
                               isActive ? "text-white border-transparent" : "bg-card text-muted-foreground hover:border-foreground/20"
                             }`}
                             style={isActive ? { backgroundColor: subMeta.color } : {}}
@@ -263,7 +261,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                             <span className="font-medium tabular-nums">{Math.round(subHebel.pct)}%</span>
                           </button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" className="bg-card text-foreground border shadow-lg p-2 max-w-[180px]">
+                        <TooltipContent side="right" className="bg-card text-foreground border shadow-lg p-2 max-w-[180px]">
                           <p className="text-[11px] font-medium mb-0.5" style={{ color: subMeta.color }}>{subMeta.label}</p>
                           <p className="text-[10px] text-muted-foreground">{subMeta.desc}</p>
                         </TooltipContent>
