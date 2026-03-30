@@ -466,97 +466,94 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
             )}
             </div>
 
-            {/* Kennzahlen rechts daneben */}
-            <div className="flex-shrink-0 border-l border-border/40 pl-4 space-y-2">
-              {/* Kunde */}
-              <div>
-                <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">Kunde</p>
+            {/* Kennzahlen rechts daneben - gruppiert */}
+            <div className="flex-shrink-0 border-l border-border/40 pl-4 flex gap-4">
+              {/* Fälle Spalte */}
+              <div className="min-w-[100px]">
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1.5">Falle</p>
                 <div className="space-y-0.5 text-[10px] tabular-nums">
-                  {/* Gesamtfälle - highlight bei Indikation */}
+                  {/* Gesamtfälle */}
                   <div 
-                    className="flex justify-between gap-3 rounded px-1 -mx-1 transition-all"
-                    style={{ 
-                      backgroundColor: activeHaupt === "indikation" ? `${HAUPT_META.indikation.color}15` : "transparent"
-                    }}
+                    className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
+                    style={{ backgroundColor: activeHaupt === "indikation" ? `${HAUPT_META.indikation.color}15` : "transparent" }}
                   >
-                    <span className={activeHaupt === "indikation" ? "font-medium" : "text-muted-foreground"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>
-                      Gesamtfalle
-                    </span>
-                    <span className={activeHaupt === "indikation" ? "font-semibold" : "text-foreground font-medium"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>
-                      {fmtInt(benchmark.total_faelle)}
-                    </span>
+                    <span className={activeHaupt === "indikation" ? "font-medium" : "text-muted-foreground"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>Gesamt</span>
+                    <span className={activeHaupt === "indikation" ? "font-semibold" : "text-foreground font-medium"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>{fmtInt(benchmark.total_faelle)}</span>
                   </div>
-                  {/* Gesamtanalysen - highlight bei Intensität (ohne Sub-Hebel) */}
+                  {/* Fälle mit Labor */}
                   <div 
-                    className="flex justify-between gap-3 rounded px-1 -mx-1 transition-all"
-                    style={{ 
-                      backgroundColor: (activeHaupt === "intensitaet" && !activeSubHebel) ? `${HAUPT_META.intensitaet.color}15` : "transparent"
-                    }}
-                  >
-                    <span className={(activeHaupt === "intensitaet" && !activeSubHebel) ? "font-medium" : "text-muted-foreground"} style={{ color: (activeHaupt === "intensitaet" && !activeSubHebel) ? HAUPT_META.intensitaet.color : undefined }}>
-                      Gesamtanalysen
-                    </span>
-                    <span className={(activeHaupt === "intensitaet" && !activeSubHebel) ? "font-semibold" : "text-foreground font-medium"} style={{ color: (activeHaupt === "intensitaet" && !activeSubHebel) ? HAUPT_META.intensitaet.color : undefined }}>
-                      {fmtInt(benchmark.total_analysen)}
-                    </span>
-                  </div>
-                  {/* Fälle mit Labor - highlight bei Indikation ODER Intensität (ohne Sub-Hebel) */}
-                  <div 
-                    className="flex justify-between gap-3 rounded px-1 -mx-1 transition-all"
+                    className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
                     style={{ 
                       backgroundColor: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel)) 
-                        ? `${activeHaupt === "indikation" ? HAUPT_META.indikation.color : HAUPT_META.intensitaet.color}15` 
-                        : "transparent"
+                        ? `${activeHaupt === "indikation" ? HAUPT_META.indikation.color : HAUPT_META.intensitaet.color}15` : "transparent"
                     }}
                   >
                     <span 
                       className={(activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel)) ? "font-medium" : "text-muted-foreground"} 
                       style={{ color: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel)) ? (activeHaupt === "indikation" ? HAUPT_META.indikation.color : HAUPT_META.intensitaet.color) : undefined }}
-                    >
-                      Falle mit Labor
-                    </span>
+                    >mit Labor</span>
                     <span 
                       className={(activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel)) ? "font-semibold" : "text-foreground font-medium"} 
                       style={{ color: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel)) ? (activeHaupt === "indikation" ? HAUPT_META.indikation.color : HAUPT_META.intensitaet.color) : undefined }}
-                    >
-                      {fmtInt(benchmark.faelle_mit_labor)}
-                    </span>
+                    >{fmtInt(benchmark.faelle_mit_labor)}</span>
                   </div>
-                  {/* Fälle Mehrfach - highlight nur bei Sub-Hebel */}
+                  {/* Fälle Mehrfach - highlight bei Sub-Hebeln */}
                   <div 
-                    className="flex justify-between gap-3 rounded px-1 -mx-1 transition-all"
-                    style={{ 
-                      backgroundColor: activeSubHebel ? `${INTENSITAET_SUB_META[activeSubHebel].color}15` : "transparent"
-                    }}
+                    className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
+                    style={{ backgroundColor: activeSubHebel ? `${INTENSITAET_SUB_META[activeSubHebel].color}15` : "transparent" }}
                   >
-                    <span 
-                      className={activeSubHebel ? "font-medium" : "text-muted-foreground"} 
-                      style={{ color: activeSubHebel ? INTENSITAET_SUB_META[activeSubHebel].color : undefined }}
-                    >
-                      Falle Mehrfach
-                    </span>
-                    <span 
-                      className={activeSubHebel ? "font-semibold" : "text-foreground font-medium"} 
-                      style={{ color: activeSubHebel ? INTENSITAET_SUB_META[activeSubHebel].color : undefined }}
-                    >
-                      {fmtInt(benchmark.faelle_mit_mehrfach)}
-                    </span>
+                    <span className={activeSubHebel ? "font-medium" : "text-muted-foreground"} style={{ color: activeSubHebel ? INTENSITAET_SUB_META[activeSubHebel].color : undefined }}>Mehrfach</span>
+                    <span className={activeSubHebel ? "font-semibold" : "text-foreground font-medium"} style={{ color: activeSubHebel ? INTENSITAET_SUB_META[activeSubHebel].color : undefined }}>{fmtInt(benchmark.faelle_mit_mehrfach)}</span>
                   </div>
-                  <div className="flex justify-between gap-3">
-                    <span className="text-muted-foreground">Falle Einzel</span>
+                  {/* Fälle Einzel */}
+                  <div className="flex justify-between gap-2">
+                    <span className="text-muted-foreground">Einzel</span>
                     <span className="text-foreground font-medium">{fmtInt(benchmark.faelle_mit_einzel)}</span>
                   </div>
                 </div>
               </div>
-              {/* Benchmark */}
-              <div className="pt-1.5 border-t border-border/30">
-                <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">Benchmark</p>
+
+              {/* Analysen Spalte */}
+              <div className="min-w-[100px]">
+                <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1.5">Analysen</p>
                 <div className="space-y-0.5 text-[10px] tabular-nums">
-                  <div className="flex justify-between gap-3">
+                  {/* Gesamtanalysen */}
+                  <div 
+                    className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
+                    style={{ backgroundColor: (activeHaupt === "intensitaet" && !activeSubHebel) ? `${HAUPT_META.intensitaet.color}15` : "transparent" }}
+                  >
+                    <span className={(activeHaupt === "intensitaet" && !activeSubHebel) ? "font-medium" : "text-muted-foreground"} style={{ color: (activeHaupt === "intensitaet" && !activeSubHebel) ? HAUPT_META.intensitaet.color : undefined }}>Gesamt</span>
+                    <span className={(activeHaupt === "intensitaet" && !activeSubHebel) ? "font-semibold" : "text-foreground font-medium"} style={{ color: (activeHaupt === "intensitaet" && !activeSubHebel) ? HAUPT_META.intensitaet.color : undefined }}>{fmtInt(benchmark.total_analysen)}</span>
+                  </div>
+                  {/* Platzhalter für Alignment */}
+                  <div className="flex justify-between gap-2 invisible">
+                    <span>-</span><span>-</span>
+                  </div>
+                  {/* Analysen aus Mehrfach - highlight bei Frequenz oder Monitorzeit */}
+                  <div 
+                    className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
+                    style={{ backgroundColor: (activeSubHebel === "frequenz" || activeSubHebel === "monitorZeit") ? `${INTENSITAET_SUB_META[activeSubHebel].color}15` : "transparent" }}
+                  >
+                    <span className={(activeSubHebel === "frequenz" || activeSubHebel === "monitorZeit") ? "font-medium" : "text-muted-foreground"} style={{ color: (activeSubHebel === "frequenz" || activeSubHebel === "monitorZeit") ? INTENSITAET_SUB_META[activeSubHebel].color : undefined }}>Mehrfach</span>
+                    <span className={(activeSubHebel === "frequenz" || activeSubHebel === "monitorZeit") ? "font-semibold" : "text-foreground font-medium"} style={{ color: (activeSubHebel === "frequenz" || activeSubHebel === "monitorZeit") ? INTENSITAET_SUB_META[activeSubHebel].color : undefined }}>{fmtInt(benchmark.analysen_aus_mehrfach)}</span>
+                  </div>
+                  {/* Analysen Einzel */}
+                  <div className="flex justify-between gap-2">
+                    <span className="text-muted-foreground">Einzel</span>
+                    <span className="text-foreground font-medium">{fmtInt(benchmark.analysen_aus_einzel)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Benchmark Spalte */}
+              <div className="min-w-[70px] border-l border-border/30 pl-3">
+                <p className="text-[9px] uppercase tracking-wider text-primary/70 font-medium mb-1.5">Benchmark</p>
+                <div className="space-y-0.5 text-[10px] tabular-nums">
+                  <div className="flex justify-between gap-2">
                     <span className="text-muted-foreground">Falle</span>
                     <span className="text-primary font-medium">{fmtInt(benchmark.benchmark_faelle)}</span>
                   </div>
-                  <div className="flex justify-between gap-3">
+                  <div className="flex justify-between gap-2">
                     <span className="text-muted-foreground">Projekte</span>
                     <span className="text-primary font-medium">{benchmark.benchmark_projekte}</span>
                   </div>

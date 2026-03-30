@@ -81,6 +81,10 @@ export interface AggregatedBenchmark {
   faelle_mit_mehrfach: number;
   /** Faelle mit nur einer Anforderung */
   faelle_mit_einzel: number;
+  /** Analysen aus Mehrfachfällen */
+  analysen_aus_mehrfach: number;
+  /** Analysen aus Einzelfällen */
+  analysen_aus_einzel: number;
   /** Anzahl Faelle im Benchmark */
   benchmark_faelle: number;
   /** Anzahl Projekte/Einrichtungen im Benchmark */
@@ -314,6 +318,10 @@ export function aggregateBenchmark(
   const faelle_mit_mehrfach = filtered.reduce((s, r) => s + r.multifaelle, 0);
   // Faelle mit Einzelanforderung = faelle_mit_labor - faelle_mit_mehrfach
   const faelle_mit_einzel = faelle_mit_labor - faelle_mit_mehrfach;
+  // Analysen aus Mehrfach- und Einzelfällen (simuliert basierend auf Verteilung)
+  // Mehrfachfälle haben im Schnitt ~3x mehr Analysen pro Fall
+  const analysen_aus_mehrfach = Math.round(total_analysen * 0.72); // ~72% der Analysen aus Mehrfachfällen
+  const analysen_aus_einzel = total_analysen - analysen_aus_mehrfach;
   // Benchmark Metadaten (simuliert - normalerweise aus Backend)
   const benchmark_faelle = Math.round(total_faelle * 12.5); // ~12.5x mehr Faelle im Benchmark
   const benchmark_projekte = 47; // Anzahl Projekte im Benchmark
@@ -371,6 +379,8 @@ export function aggregateBenchmark(
     faelle_mit_labor,
     faelle_mit_mehrfach,
     faelle_mit_einzel,
+    analysen_aus_mehrfach,
+    analysen_aus_einzel,
     benchmark_faelle,
     benchmark_projekte,
     indikation: {
