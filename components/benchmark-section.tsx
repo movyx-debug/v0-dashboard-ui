@@ -164,115 +164,114 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           {/* ── Divider ────────────────────────────────────── */}
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
-          {/* ── CENTER: 2 clickable Haupthebel tiles ───── */}
+          {/* ── CENTER: Potenzial-Hebel (2 Haupt + 3 Sub unter Intensitat) ───── */}
           <div className="flex-shrink-0">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Potenzial-Hebel
             </p>
-            <div className="grid grid-cols-2 gap-3">
-              {HAUPT_KEYS.map((key) => {
-                const sub = key === "indikation" ? benchmark.indikation : benchmark.intensitaet;
-                const meta = HAUPT_META[key];
-                const Icon = meta.icon;
-                return (
-                  <Tooltip key={key}>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveHaupt(activeHaupt === key ? null : key);
-                          setActiveSubHebel(null);
-                        }}
-                        className={`group relative rounded-xl border bg-card px-4 py-3 text-left transition-all hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[140px] ${
-                          activeHaupt === key ? "ring-2 ring-offset-1" : "hover:border-foreground/20"
-                        }`}
-                        style={activeHaupt === key ? { borderColor: meta.color, ringColor: meta.color } : {}}
-                      >
-                        {/* Colored top accent line */}
-                        <div
-                          className="absolute top-0 left-3 right-3 h-[2px] rounded-full"
-                          style={{ backgroundColor: meta.color }}
-                        />
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Icon
-                            className="h-3.5 w-3.5 flex-shrink-0"
-                            style={{ color: meta.color }}
-                          />
-                          <span className="text-[11px] text-muted-foreground truncate">
-                            {meta.label}
-                          </span>
-                        </div>
-                        <div className="flex items-baseline gap-1">
-                          <span
-                            className="text-xl font-bold leading-none tabular-nums"
-                            style={{ color: meta.color }}
-                          >
-                            {fmtPct(sub.pct)}
-                          </span>
-                        </div>
-                        {/* Mini progress bar */}
-                        <div className="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${Math.min(sub.pct, 100)}%`,
-                              backgroundColor: meta.color,
-                            }}
-                          />
-                        </div>
-                        {/* Phase mini bar (only for Indikation) */}
-                        {key === "indikation" && (
-                          <div className="mt-1.5 flex items-center gap-px">
-                            {benchmark.indikation.phasen.map((ph, i) => (
-                              <div
-                                key={ph.name}
-                                className="h-[5px] transition-all duration-500 first:rounded-l-full last:rounded-r-full"
-                                style={{
-                                  width: `${ph.pct}%`,
-                                  backgroundColor: PHASE_COLORS[i],
-                                }}
-                              />
-                            ))}
-                          </div>
-                        )}
-                        {/* Sub-hebel mini bar (only for Intensitat) */}
-                        {key === "intensitaet" && (
-                          <div className="mt-1.5 flex items-center gap-px">
-                            {INTENSITAET_SUB_KEYS.map((subKey) => {
-                              const subHebel = benchmark.intensitaet.subHebel[subKey];
-                              const subMeta = INTENSITAET_SUB_META[subKey];
-                              return (
-                                <div
-                                  key={subKey}
-                                  className="h-[5px] transition-all duration-500 first:rounded-l-full last:rounded-r-full"
-                                  style={{
-                                    width: `${subHebel.pct}%`,
-                                    backgroundColor: subMeta.color,
-                                  }}
-                                />
-                              );
-                            })}
-                          </div>
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="bottom"
-                      className="bg-card text-foreground border shadow-lg p-3 max-w-[220px]"
+            <div className="flex gap-3">
+              {/* Indikation tile */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveHaupt(activeHaupt === "indikation" ? null : "indikation");
+                      setActiveSubHebel(null);
+                    }}
+                    className={`group relative rounded-xl border bg-card px-4 py-3 text-left transition-all hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px] ${
+                      activeHaupt === "indikation" ? "ring-2 ring-offset-1" : "hover:border-foreground/20"
+                    }`}
+                    style={activeHaupt === "indikation" ? { borderColor: HAUPT_META.indikation.color } : {}}
+                  >
+                    <div className="absolute top-0 left-3 right-3 h-[2px] rounded-full" style={{ backgroundColor: HAUPT_META.indikation.color }} />
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Activity className="h-3.5 w-3.5 flex-shrink-0" style={{ color: HAUPT_META.indikation.color }} />
+                      <span className="text-[11px] text-muted-foreground">Indikation</span>
+                    </div>
+                    <span className="text-xl font-bold tabular-nums" style={{ color: HAUPT_META.indikation.color }}>
+                      {fmtPct(benchmark.indikation.pct)}
+                    </span>
+                    <div className="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(benchmark.indikation.pct, 100)}%`, backgroundColor: HAUPT_META.indikation.color }} />
+                    </div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-card text-foreground border shadow-lg p-2.5 max-w-[200px]">
+                  <p className="text-xs text-muted-foreground">{HAUPT_META.indikation.desc}</p>
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Intensitat group (Haupthebel + 3 Sub-Hebel) */}
+              <div className="flex flex-col gap-1">
+                {/* Intensitat main tile */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveHaupt(activeHaupt === "intensitaet" ? null : "intensitaet");
+                        setActiveSubHebel(null);
+                      }}
+                      className={`group relative rounded-xl border bg-card px-4 py-3 text-left transition-all hover:shadow-md cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[120px] ${
+                        activeHaupt === "intensitaet" && !activeSubHebel ? "ring-2 ring-offset-1" : "hover:border-foreground/20"
+                      }`}
+                      style={activeHaupt === "intensitaet" && !activeSubHebel ? { borderColor: HAUPT_META.intensitaet.color } : {}}
                     >
-                      <p className="text-xs text-muted-foreground mb-1">
-                        {meta.desc}
-                      </p>
-                      <p className="text-xs font-semibold">
-                        {fmtInt(sub.analysen)} einsparbare Analysen
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        Klicken fur Details
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
+                      <div className="absolute top-0 left-3 right-3 h-[2px] rounded-full" style={{ backgroundColor: HAUPT_META.intensitaet.color }} />
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Layers className="h-3.5 w-3.5 flex-shrink-0" style={{ color: HAUPT_META.intensitaet.color }} />
+                        <span className="text-[11px] text-muted-foreground">Intensitat</span>
+                      </div>
+                      <span className="text-xl font-bold tabular-nums" style={{ color: HAUPT_META.intensitaet.color }}>
+                        {fmtPct(benchmark.intensitaet.pct)}
+                      </span>
+                      <div className="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${Math.min(benchmark.intensitaet.pct, 100)}%`, backgroundColor: HAUPT_META.intensitaet.color }} />
+                      </div>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-card text-foreground border shadow-lg p-2.5 max-w-[200px]">
+                    <p className="text-xs text-muted-foreground">{HAUPT_META.intensitaet.desc}</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                {/* 3 Sub-Hebel (connected visually to Intensitat) */}
+                <div className="flex gap-1 pl-2 relative">
+                  {/* Connector line */}
+                  <div className="absolute -top-1 left-0 w-2 h-3 border-l-2 border-b-2 rounded-bl-md" style={{ borderColor: `${HAUPT_META.intensitaet.color}40` }} />
+                  {INTENSITAET_SUB_KEYS.map((subKey) => {
+                    const subHebel = benchmark.intensitaet.subHebel[subKey];
+                    const subMeta = INTENSITAET_SUB_META[subKey];
+                    const SubIcon = subMeta.icon;
+                    const isActive = activeSubHebel === subKey;
+                    return (
+                      <Tooltip key={subKey}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveHaupt("intensitaet");
+                              setActiveSubHebel(isActive ? null : subKey);
+                            }}
+                            className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] transition-all cursor-pointer ${
+                              isActive ? "text-white border-transparent" : "bg-card text-muted-foreground hover:border-foreground/20"
+                            }`}
+                            style={isActive ? { backgroundColor: subMeta.color } : {}}
+                          >
+                            <SubIcon className="h-3 w-3" />
+                            <span className="font-medium tabular-nums">{Math.round(subHebel.pct)}%</span>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" className="bg-card text-foreground border shadow-lg p-2 max-w-[180px]">
+                          <p className="text-[11px] font-medium mb-0.5" style={{ color: subMeta.color }}>{subMeta.label}</p>
+                          <p className="text-[10px] text-muted-foreground">{subMeta.desc}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -325,8 +324,8 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
               </div>
             )}
 
-            {/* Intensitat selected */}
-            {activeHaupt === "intensitaet" && (
+            {/* Intensitat selected (no sub-hebel active) */}
+            {activeHaupt === "intensitaet" && !activeSubHebel && (
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
                   <Layers className="h-4 w-4" style={{ color: HAUPT_META.intensitaet.color }} />
@@ -345,50 +344,37 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     {fmtInt(benchmark.intensitaet.analysen)} Analysen ({fmtPct(benchmark.intensitaet.pct)})
                   </span>
                 </div>
-                {/* Sub-Hebel toggles */}
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  {INTENSITAET_SUB_KEYS.map((subKey) => {
-                    const subMeta = INTENSITAET_SUB_META[subKey];
-                    const SubIcon = subMeta.icon;
-                    const isActive = activeSubHebel === subKey;
-                    return (
-                      <button
-                        key={subKey}
-                        type="button"
-                        onClick={() => setActiveSubHebel(isActive ? null : subKey)}
-                        className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] transition-all cursor-pointer ${
-                          isActive ? "text-white" : "text-muted-foreground hover:bg-muted"
-                        }`}
-                        style={isActive ? { backgroundColor: subMeta.color } : {}}
-                      >
-                        <SubIcon className="h-3 w-3" />
-                        {subMeta.label}
-                      </button>
-                    );
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {HAUPT_META.intensitaet.longDesc}
+                </p>
+              </div>
+            )}
+
+            {/* Sub-Hebel selected */}
+            {activeSubHebel && (
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  {React.createElement(INTENSITAET_SUB_META[activeSubHebel].icon, {
+                    className: "h-4 w-4",
+                    style: { color: INTENSITAET_SUB_META[activeSubHebel].color }
                   })}
-                </div>
-                {/* Show sub-hebel explanation or default intensitat explanation */}
-                {!activeSubHebel ? (
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    {HAUPT_META.intensitaet.longDesc}
+                  <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: INTENSITAET_SUB_META[activeSubHebel].color }}>
+                    {INTENSITAET_SUB_META[activeSubHebel].label}
                   </p>
-                ) : (
-                  <div>
-                    <div className="flex items-center gap-2 mb-1 text-[11px]">
-                      <span className="text-muted-foreground">Kunde:</span>
-                      <span className="font-semibold" style={{ color: INTENSITAET_SUB_META[activeSubHebel].color }}>
-                        {fmtDe(benchmark.intensitaet.subHebel[activeSubHebel].kunde)} {INTENSITAET_SUB_META[activeSubHebel].unit}
-                      </span>
-                      <span className="text-muted-foreground ml-2">Benchmark:</span>
-                      <span className="font-semibold text-foreground">
-                        {fmtDe(benchmark.intensitaet.subHebel[activeSubHebel].benchmark)} {INTENSITAET_SUB_META[activeSubHebel].unit}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      {INTENSITAET_SUB_META[activeSubHebel].longDesc}
-                    </p>
-                  </div>
-                )}
+                </div>
+                <div className="flex items-center gap-3 mb-1.5">
+                  <span className="text-base font-bold tabular-nums" style={{ color: INTENSITAET_SUB_META[activeSubHebel].color }}>
+                    {fmtDe(benchmark.intensitaet.subHebel[activeSubHebel].kunde)} {INTENSITAET_SUB_META[activeSubHebel].unit}
+                  </span>
+                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-base font-bold tabular-nums text-primary">
+                    {fmtDe(benchmark.intensitaet.subHebel[activeSubHebel].benchmark)} {INTENSITAET_SUB_META[activeSubHebel].unit}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">(Benchmark)</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {INTENSITAET_SUB_META[activeSubHebel].longDesc}
+                </p>
               </div>
             )}
           </div>
