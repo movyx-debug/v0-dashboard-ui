@@ -462,6 +462,80 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 </p>
               </div>
             )}
+
+            {/* Kennzahlen-Uebersicht */}
+            <div className="mt-3 pt-2 border-t border-border/40">
+              <div className="flex items-start gap-6">
+                {/* Kunde Kennzahlen */}
+                <div className="flex-1">
+                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">Kunde</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[10px] tabular-nums">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Gesamtfalle</span>
+                      <span className="text-foreground font-medium">{fmtInt(benchmark.total_faelle)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Gesamtanalysen</span>
+                      <span className="text-foreground font-medium">{fmtInt(benchmark.total_analysen)}</span>
+                    </div>
+                    <div 
+                      className={`flex justify-between rounded px-1 -mx-1 transition-all ${activeHaupt === "indikation" ? "bg-[var(--highlight-bg)]" : ""}`}
+                      style={{ 
+                        // @ts-expect-error CSS custom property
+                        "--highlight-bg": activeHaupt === "indikation" ? `${HAUPT_META.indikation.color}15` : "transparent"
+                      }}
+                    >
+                      <span className={activeHaupt === "indikation" ? "font-medium" : "text-muted-foreground"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>
+                        Falle mit Labor
+                      </span>
+                      <span className={activeHaupt === "indikation" ? "font-semibold" : "text-foreground font-medium"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>
+                        {fmtInt(benchmark.faelle_mit_labor)}
+                      </span>
+                    </div>
+                    <div 
+                      className={`flex justify-between rounded px-1 -mx-1 transition-all ${(activeHaupt === "intensitaet" || activeSubHebel) ? "bg-[var(--highlight-bg)]" : ""}`}
+                      style={{ 
+                        // @ts-expect-error CSS custom property
+                        "--highlight-bg": (activeHaupt === "intensitaet" || activeSubHebel) 
+                          ? `${activeSubHebel ? INTENSITAET_SUB_META[activeSubHebel].color : HAUPT_META.intensitaet.color}15` 
+                          : "transparent"
+                      }}
+                    >
+                      <span 
+                        className={(activeHaupt === "intensitaet" || activeSubHebel) ? "font-medium" : "text-muted-foreground"} 
+                        style={{ color: (activeHaupt === "intensitaet" || activeSubHebel) ? (activeSubHebel ? INTENSITAET_SUB_META[activeSubHebel].color : HAUPT_META.intensitaet.color) : undefined }}
+                      >
+                        Mehrfachanforderung
+                      </span>
+                      <span 
+                        className={(activeHaupt === "intensitaet" || activeSubHebel) ? "font-semibold" : "text-foreground font-medium"} 
+                        style={{ color: (activeHaupt === "intensitaet" || activeSubHebel) ? (activeSubHebel ? INTENSITAET_SUB_META[activeSubHebel].color : HAUPT_META.intensitaet.color) : undefined }}
+                      >
+                        {fmtInt(benchmark.faelle_mit_mehrfach)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between col-span-2 pt-0.5 border-t border-border/30 mt-0.5">
+                      <span className="text-muted-foreground">Einzelanforderung</span>
+                      <span className="text-foreground font-medium">{fmtInt(benchmark.faelle_mit_einzel)}</span>
+                    </div>
+                  </div>
+                </div>
+                {/* Benchmark Kennzahlen */}
+                <div className="flex-shrink-0">
+                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">Benchmark</p>
+                  <div className="space-y-0.5 text-[10px] tabular-nums">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted-foreground">Falle</span>
+                      <span className="text-primary font-medium">{fmtInt(benchmark.benchmark_faelle)}</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted-foreground">Projekte</span>
+                      <span className="text-primary font-medium">{benchmark.benchmark_projekte}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -75,6 +75,16 @@ export interface AggregatedBenchmark {
   total_faelle: number;
   /** Benchmark-side analysen (faelle * a/f benchmark) */
   benchmark_analysen: number;
+  /** Faelle mit mindestens einer Laboranforderung */
+  faelle_mit_labor: number;
+  /** Faelle mit Mehrfachanforderung (multifaelle) */
+  faelle_mit_mehrfach: number;
+  /** Faelle mit nur einer Anforderung */
+  faelle_mit_einzel: number;
+  /** Anzahl Faelle im Benchmark */
+  benchmark_faelle: number;
+  /** Anzahl Projekte/Einrichtungen im Benchmark */
+  benchmark_projekte: number;
   // Main levers (2 Haupthebel)
   indikation: { analysen: number; pct: number; kunde: number; benchmark: number; phasen: PatientenPhase[] };
   intensitaet: IntensitaetBenchmark;
@@ -297,6 +307,16 @@ export function aggregateBenchmark(
   const total_analysen = filtered.reduce((s, r) => s + r.analysen, 0);
   const total_faelle = filtered.reduce((s, r) => s + r.faelle_kunde, 0);
   const analysen_pro_fall_kunde = total_faelle > 0 ? total_analysen / total_faelle : 0;
+  
+  // Faelle mit Labor = alle Faelle die eine Anforderung haben
+  const faelle_mit_labor = filtered.reduce((s, r) => s + r.faelle_mit_anforderung_kunde, 0);
+  // Faelle mit Mehrfachanforderung
+  const faelle_mit_mehrfach = filtered.reduce((s, r) => s + r.multifaelle, 0);
+  // Faelle mit Einzelanforderung = faelle_mit_labor - faelle_mit_mehrfach
+  const faelle_mit_einzel = faelle_mit_labor - faelle_mit_mehrfach;
+  // Benchmark Metadaten (simuliert - normalerweise aus Backend)
+  const benchmark_faelle = Math.round(total_faelle * 12.5); // ~12.5x mehr Faelle im Benchmark
+  const benchmark_projekte = 47; // Anzahl Projekte im Benchmark
 
   // Weighted benchmark
   const weighted_benchmark_sum = filtered.reduce(
@@ -348,6 +368,11 @@ export function aggregateBenchmark(
     total_analysen,
     total_faelle,
     benchmark_analysen: total_faelle * analysen_pro_fall_benchmark,
+    faelle_mit_labor,
+    faelle_mit_mehrfach,
+    faelle_mit_einzel,
+    benchmark_faelle,
+    benchmark_projekte,
     indikation: {
       analysen: pot_indikation,
       pct: pot_total > 0 ? (pot_indikation / pot_total) * 100 : 0,
