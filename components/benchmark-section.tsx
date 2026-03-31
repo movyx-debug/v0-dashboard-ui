@@ -351,9 +351,9 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
           {/* ── RIGHT: Context-sensitive explanation area + Kennzahlen ───── */}
-          <div className="flex-1 flex gap-4">
+          <div className="flex-1 flex gap-4 min-w-0">
             {/* Erklaerungsbereich */}
-            <div className="flex-1 min-w-[180px] max-w-[280px]">
+            <div className="flex-1 min-w-0">
             {/* Default: Analysen pro Fall */}
             {!activeHaupt && (
               <div className="rounded-lg border border-border/50 bg-muted/30 p-3 transition-all">
