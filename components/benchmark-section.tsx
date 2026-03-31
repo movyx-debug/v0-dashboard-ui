@@ -284,7 +284,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 </Tooltip>
 
                 {/* 3 Sub-Hebel (stacked vertically, right of Intensitat) */}
-                <div className="flex flex-col justify-center gap-0.5">
+                <div className="flex flex-col justify-center gap-1">
                   {INTENSITAET_SUB_KEYS.map((subKey) => {
                     const subHebel = benchmark.intensitaet.subHebel[subKey];
                     const subMeta = INTENSITAET_SUB_META[subKey];
@@ -299,15 +299,14 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                               setActiveHaupt("intensitaet");
                               setActiveSubHebel(isActive ? null : subKey);
                             }}
-                            className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[10px] transition-all cursor-pointer ${
+                            className={`flex flex-col gap-0.5 px-2 py-1.5 rounded-lg border text-[10px] transition-all cursor-pointer min-w-[100px] ${
                               isActive 
-                                ? "ring-1 ring-offset-1 font-semibold" 
+                                ? "ring-1 ring-offset-1" 
                                 : "bg-card text-muted-foreground"
                             }`}
                             style={{
                               backgroundColor: isActive ? `${subMeta.color}20` : undefined,
                               borderColor: isActive ? subMeta.color : undefined,
-                              color: isActive ? subMeta.color : undefined,
                               // @ts-expect-error CSS custom property
                               "--tw-ring-color": subMeta.color,
                             }}
@@ -315,19 +314,25 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                               if (!isActive) {
                                 e.currentTarget.style.backgroundColor = `${subMeta.color}15`;
                                 e.currentTarget.style.borderColor = `${subMeta.color}60`;
-                                e.currentTarget.style.color = subMeta.color;
                               }
                             }}
                             onMouseLeave={(e) => {
                               if (!isActive) {
                                 e.currentTarget.style.backgroundColor = "";
                                 e.currentTarget.style.borderColor = "";
-                                e.currentTarget.style.color = "";
                               }
                             }}
                           >
-                            <SubIcon className="h-3 w-3" />
-                            <span className="font-medium tabular-nums">{Math.round(subHebel.pct)}%</span>
+                            <div className="flex items-center justify-between gap-1.5 w-full">
+                              <div className="flex items-center gap-1">
+                                <SubIcon className="h-3 w-3 flex-shrink-0" style={{ color: subMeta.color }} />
+                                <span className={`text-[9px] truncate ${isActive ? "font-medium" : ""}`} style={{ color: isActive ? subMeta.color : undefined }}>{subMeta.label}</span>
+                              </div>
+                              <span className="font-semibold tabular-nums" style={{ color: subMeta.color }}>{Math.round(subHebel.pct)}%</span>
+                            </div>
+                            <div className="h-1 rounded-full bg-secondary/60 overflow-hidden w-full">
+                              <div className="h-full rounded-full" style={{ width: `${Math.min(subHebel.pct, 100)}%`, backgroundColor: subMeta.color }} />
+                            </div>
                           </button>
                         </TooltipTrigger>
                         <TooltipContent side="right" className="bg-card text-foreground border shadow-lg p-2 max-w-[180px]">
@@ -348,7 +353,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           {/* ── RIGHT: Context-sensitive explanation area + Kennzahlen ───── */}
           <div className="flex-1 flex gap-4">
             {/* Erklaerungsbereich */}
-            <div className="flex-1 min-w-[220px]">
+            <div className="flex-1 min-w-[180px] max-w-[280px]">
             {/* Default: Analysen pro Fall */}
             {!activeHaupt && (
               <div className="rounded-lg border border-border/50 bg-muted/30 p-3 transition-all">
