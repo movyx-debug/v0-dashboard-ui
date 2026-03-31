@@ -482,13 +482,13 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                       <span className={activeHaupt === "indikation" ? "font-medium" : "text-muted-foreground"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>Gesamt</span>
                       <span className={activeHaupt === "indikation" ? "font-semibold" : "text-foreground font-medium"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>{fmtInt(benchmark.total_faelle)}</span>
                     </div>
-                    {/* mit Labor - highlight bei Indikation, Intensität (ohne Sub), oder Monitorfallrate */}
+                    {/* mit Labor - highlight bei Indikation, Intensität (ohne Sub), oder Monitorfallrate (multiCaseRate) */}
                     {(() => {
-                      const highlightMitLabor = activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate";
+                      const highlightMitLabor = activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "multiCaseRate";
                       const mitLaborColor = activeHaupt === "indikation" 
                         ? HAUPT_META.indikation.color 
-                        : activeSubHebel === "monitorFallrate" 
-                          ? INTENSITAET_SUB_META.monitorFallrate.color 
+                        : activeSubHebel === "multiCaseRate" 
+                          ? INTENSITAET_SUB_META.multiCaseRate.color 
                           : HAUPT_META.intensitaet.color;
                       return (
                         <div 
