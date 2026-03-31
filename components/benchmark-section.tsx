@@ -52,11 +52,11 @@ const HAUPT_META = {
   },
 } as const;
 
-// Sub-Hebel der Intensitat
+// Sub-Hebel der Intensitat - Orange/Gelb/Braun Palette
 const INTENSITAET_SUB_META = {
   multiCaseRate: {
-    color: "#cb7b5a",
-    bgLight: "rgba(203,123,90,0.08)",
+    color: "#d97706", // amber-600
+    bgLight: "rgba(217,119,6,0.08)",
     icon: Repeat2,
     label: "Monitorfallrate",
     desc: "Gehen zu viele Falle ins Monitoring?",
@@ -65,8 +65,8 @@ const INTENSITAET_SUB_META = {
     unit: "%",
   },
   frequenz: {
-    color: "#4da8a0",
-    bgLight: "rgba(77,168,160,0.08)",
+    color: "#ca8a04", // yellow-600
+    bgLight: "rgba(202,138,4,0.08)",
     icon: Clock,
     label: "Frequenz",
     desc: "Wird der Parameter zu haufig nachbestellt?",
@@ -75,8 +75,8 @@ const INTENSITAET_SUB_META = {
     unit: "Tage",
   },
   monitorZeit: {
-    color: "#c07a8e",
-    bgLight: "rgba(192,122,142,0.08)",
+    color: "#92400e", // amber-800 (braun)
+    bgLight: "rgba(146,64,14,0.08)",
     icon: Timer,
     label: "Monitorzeit",
     desc: "Dauert das Monitoring zu lange?",
@@ -166,9 +166,114 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
 
           {/* ── CENTER: Potenzial-Hebel (2 Haupt + 3 Sub unter Intensitat) ───── */}
           <div className="flex-shrink-0">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
-              Potenzial-Hebel
-            </p>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+                Potenzial-Hebel
+              </p>
+            </div>
+            
+            {/* Stacked Bar: Indikation + Intensitaet (mit Sub-Hebeln) */}
+            {(() => {
+              // Berechne relative Anteile basierend auf Potenzial-EUR
+              const indPot = benchmark.indikation.pot_net_euro;
+              const intPot = benchmark.intensitaet.pot_net_euro;
+              const totalPot = indPot + intPot;
+              const indPct = totalPot > 0 ? (indPot / totalPot) * 100 : 50;
+              const intPct = totalPot > 0 ? (intPot / totalPot) * 100 : 50;
+              
+              // Sub-Hebel Anteile innerhalb Intensitaet
+              const subTotal = benchmark.intensitaet.subHebel.multiCaseRate.pot_net_euro + 
+                               benchmark.intensitaet.subHebel.frequenz.pot_net_euro + 
+                               benchmark.intensitaet.subHebel.monitorZeit.pot_net_euro;
+              const multiPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.multiCaseRate.pot_net_euro / subTotal) * intPct : intPct / 3;
+              const freqPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.frequenz.pot_net_euro / subTotal) * intPct : intPct / 3;
+              const monPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.monitorZeit.pot_net_euro / subTotal) * intPct : intPct / 3;
+              
+              return (
+                <div className="mb-3">
+                  <div className="flex h-2.5 rounded-full overflow-hidden bg-secondary/40">
+                    {/* Indikation */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="h-full transition-all cursor-pointer hover:opacity-80"
+                          style={{ width: `${indPct}%`, backgroundColor: HAUPT_META.indikation.color }}
+                          onClick={() => {
+                            setActiveHaupt(activeHaupt === "indikation" ? null : "indikation");
+                            setActiveSubHebel(null);
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-[10px]">
+                        <span style={{ color: HAUPT_META.indikation.color }}>Indikation</span>: {Math.round(indPct)}%
+                      </TooltipContent>
+                    </Tooltip>
+                    {/* Intensitaet aufgeteilt in 3 Sub-Hebel */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="h-full transition-all cursor-pointer hover:opacity-80"
+                          style={{ width: `${multiPct}%`, backgroundColor: INTENSITAET_SUB_META.multiCaseRate.color }}
+                          onClick={() => {
+                            setActiveHaupt("intensitaet");
+                            setActiveSubHebel(activeSubHebel === "multiCaseRate" ? null : "multiCaseRate");
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-[10px]">
+                        <span style={{ color: INTENSITAET_SUB_META.multiCaseRate.color }}>Monitorfallrate</span>: {Math.round(multiPct)}%
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="h-full transition-all cursor-pointer hover:opacity-80"
+                          style={{ width: `${freqPct}%`, backgroundColor: INTENSITAET_SUB_META.frequenz.color }}
+                          onClick={() => {
+                            setActiveHaupt("intensitaet");
+                            setActiveSubHebel(activeSubHebel === "frequenz" ? null : "frequenz");
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-[10px]">
+                        <span style={{ color: INTENSITAET_SUB_META.frequenz.color }}>Frequenz</span>: {Math.round(freqPct)}%
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="h-full transition-all cursor-pointer hover:opacity-80"
+                          style={{ width: `${monPct}%`, backgroundColor: INTENSITAET_SUB_META.monitorZeit.color }}
+                          onClick={() => {
+                            setActiveHaupt("intensitaet");
+                            setActiveSubHebel(activeSubHebel === "monitorZeit" ? null : "monitorZeit");
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-[10px]">
+                        <span style={{ color: INTENSITAET_SUB_META.monitorZeit.color }}>Monitorzeit</span>: {Math.round(monPct)}%
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  {/* Legende */}
+                  <div className="flex justify-between mt-1 text-[9px] text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: HAUPT_META.indikation.color }} />
+                      <span>Indikation</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground/60">Intensitat:</span>
+                      <div className="flex items-center gap-0.5">
+                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: INTENSITAET_SUB_META.multiCaseRate.color }} />
+                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: INTENSITAET_SUB_META.frequenz.color }} />
+                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: INTENSITAET_SUB_META.monitorZeit.color }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+            
             <div className="flex gap-3">
               {/* Indikation tile */}
               <Tooltip>
