@@ -483,22 +483,29 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                       <span className={activeHaupt === "indikation" ? "font-semibold" : "text-foreground font-medium"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>{fmtInt(benchmark.total_faelle)}</span>
                     </div>
                     {/* mit Labor - highlight bei Indikation, Intensität (ohne Sub), oder Monitorfallrate */}
-                    <div 
-                      className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
-                      style={{ 
-                        backgroundColor: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate") 
-                          ? `${activeHaupt === "indikation" ? HAUPT_META.indikation.color : (activeSubHebel === "monitorFallrate" ? INTENSITAET_SUB_META.monitorFallrate.color : HAUPT_META.intensitaet.color)}15` : "transparent"
-                      }}
-                    >
-                      <span 
-                        className={(activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate") ? "font-medium" : "text-muted-foreground"} 
-                        style={{ color: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate") ? (activeHaupt === "indikation" ? HAUPT_META.indikation.color : (activeSubHebel === "monitorFallrate" ? INTENSITAET_SUB_META.monitorFallrate.color : HAUPT_META.intensitaet.color)) : undefined }}
-                      >mit Labor</span>
-                      <span 
-                        className={(activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate") ? "font-semibold" : "text-foreground font-medium"} 
-                        style={{ color: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate") ? (activeHaupt === "indikation" ? HAUPT_META.indikation.color : (activeSubHebel === "monitorFallrate" ? INTENSITAET_SUB_META.monitorFallrate.color : HAUPT_META.intensitaet.color)) : undefined }}
-                      >{fmtInt(benchmark.faelle_mit_labor)}</span>
-                    </div>
+                    {(() => {
+                      const highlightMitLabor = activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate";
+                      const mitLaborColor = activeHaupt === "indikation" 
+                        ? HAUPT_META.indikation.color 
+                        : activeSubHebel === "monitorFallrate" 
+                          ? INTENSITAET_SUB_META.monitorFallrate.color 
+                          : HAUPT_META.intensitaet.color;
+                      return (
+                        <div 
+                          className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
+                          style={{ backgroundColor: highlightMitLabor ? `${mitLaborColor}15` : "transparent" }}
+                        >
+                          <span 
+                            className={highlightMitLabor ? "font-medium" : "text-muted-foreground"} 
+                            style={{ color: highlightMitLabor ? mitLaborColor : undefined }}
+                          >mit Labor</span>
+                          <span 
+                            className={highlightMitLabor ? "font-semibold" : "text-foreground font-medium"} 
+                            style={{ color: highlightMitLabor ? mitLaborColor : undefined }}
+                          >{fmtInt(benchmark.faelle_mit_labor)}</span>
+                        </div>
+                      );
+                    })()}
                     {/* Mehrfach - highlight bei allen Sub-Hebeln */}
                     <div 
                       className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
