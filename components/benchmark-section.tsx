@@ -356,14 +356,16 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
             <div className="flex-1 min-w-0">
             {/* Default: Analysen pro Fall */}
             {!activeHaupt && (
-              <div className="rounded-lg border border-border/50 bg-muted/30 p-3 transition-all">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-1.5">
-                  Analysen pro Fall
-                </p>
+              <div className="rounded-lg border-l-[3px] border-border/50 bg-muted/30 p-3 transition-all">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+                    Analysen pro Fall
+                  </p>
+                </div>
                 <div className="flex items-center gap-3 mb-1.5">
-                  <span className="text-lg font-bold tabular-nums text-foreground">{fmtDe(benchmark.analysen_pro_fall_kunde)}</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-lg font-bold tabular-nums text-primary">{fmtDe(benchmark.analysen_pro_fall_benchmark)}</span>
+                  <span className="text-base font-bold tabular-nums text-foreground">{fmtDe(benchmark.analysen_pro_fall_kunde)}</span>
+                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-base font-bold tabular-nums text-primary">{fmtDe(benchmark.analysen_pro_fall_benchmark)}</span>
                   <span className="text-[10px] text-muted-foreground">(Benchmark)</span>
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
