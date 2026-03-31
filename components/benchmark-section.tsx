@@ -474,6 +474,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 <div className="min-w-[90px]">
                   <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">Falle</p>
                   <div className="space-y-0.5 text-[10px] tabular-nums">
+                    {/* Gesamt - highlight bei Indikation */}
                     <div 
                       className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
                       style={{ backgroundColor: activeHaupt === "indikation" ? `${HAUPT_META.indikation.color}15` : "transparent" }}
@@ -481,22 +482,24 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                       <span className={activeHaupt === "indikation" ? "font-medium" : "text-muted-foreground"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>Gesamt</span>
                       <span className={activeHaupt === "indikation" ? "font-semibold" : "text-foreground font-medium"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>{fmtInt(benchmark.total_faelle)}</span>
                     </div>
+                    {/* mit Labor - highlight bei Indikation, Intensität (ohne Sub), oder Monitorfallrate */}
                     <div 
                       className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
                       style={{ 
-                        backgroundColor: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel)) 
-                          ? `${activeHaupt === "indikation" ? HAUPT_META.indikation.color : HAUPT_META.intensitaet.color}15` : "transparent"
+                        backgroundColor: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate") 
+                          ? `${activeHaupt === "indikation" ? HAUPT_META.indikation.color : (activeSubHebel === "monitorFallrate" ? INTENSITAET_SUB_META.monitorFallrate.color : HAUPT_META.intensitaet.color)}15` : "transparent"
                       }}
                     >
                       <span 
-                        className={(activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel)) ? "font-medium" : "text-muted-foreground"} 
-                        style={{ color: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel)) ? (activeHaupt === "indikation" ? HAUPT_META.indikation.color : HAUPT_META.intensitaet.color) : undefined }}
+                        className={(activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate") ? "font-medium" : "text-muted-foreground"} 
+                        style={{ color: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate") ? (activeHaupt === "indikation" ? HAUPT_META.indikation.color : (activeSubHebel === "monitorFallrate" ? INTENSITAET_SUB_META.monitorFallrate.color : HAUPT_META.intensitaet.color)) : undefined }}
                       >mit Labor</span>
                       <span 
-                        className={(activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel)) ? "font-semibold" : "text-foreground font-medium"} 
-                        style={{ color: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel)) ? (activeHaupt === "indikation" ? HAUPT_META.indikation.color : HAUPT_META.intensitaet.color) : undefined }}
+                        className={(activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate") ? "font-semibold" : "text-foreground font-medium"} 
+                        style={{ color: (activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "monitorFallrate") ? (activeHaupt === "indikation" ? HAUPT_META.indikation.color : (activeSubHebel === "monitorFallrate" ? INTENSITAET_SUB_META.monitorFallrate.color : HAUPT_META.intensitaet.color)) : undefined }}
                       >{fmtInt(benchmark.faelle_mit_labor)}</span>
                     </div>
+                    {/* Mehrfach - highlight bei allen Sub-Hebeln */}
                     <div 
                       className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
                       style={{ backgroundColor: activeSubHebel ? `${INTENSITAET_SUB_META[activeSubHebel].color}15` : "transparent" }}
@@ -515,6 +518,9 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 <div className="min-w-[90px]">
                   <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">Analysen</p>
                   <div className="space-y-0.5 text-[10px] tabular-nums">
+                    {/* Platzhalter für Alignment mit Fälle Gesamt */}
+                    <div className="flex justify-between gap-2 invisible"><span>-</span><span>-</span></div>
+                    {/* Gesamt - auf Höhe von "mit Labor", highlight bei Intensität (ohne Sub) */}
                     <div 
                       className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
                       style={{ backgroundColor: (activeHaupt === "intensitaet" && !activeSubHebel) ? `${HAUPT_META.intensitaet.color}15` : "transparent" }}
@@ -522,7 +528,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                       <span className={(activeHaupt === "intensitaet" && !activeSubHebel) ? "font-medium" : "text-muted-foreground"} style={{ color: (activeHaupt === "intensitaet" && !activeSubHebel) ? HAUPT_META.intensitaet.color : undefined }}>Gesamt</span>
                       <span className={(activeHaupt === "intensitaet" && !activeSubHebel) ? "font-semibold" : "text-foreground font-medium"} style={{ color: (activeHaupt === "intensitaet" && !activeSubHebel) ? HAUPT_META.intensitaet.color : undefined }}>{fmtInt(benchmark.total_analysen)}</span>
                     </div>
-                    <div className="flex justify-between gap-2 invisible"><span>-</span><span>-</span></div>
+                    {/* Mehrfach - highlight bei Frequenz oder Monitorzeit */}
                     <div 
                       className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
                       style={{ backgroundColor: (activeSubHebel === "frequenz" || activeSubHebel === "monitorZeit") ? `${INTENSITAET_SUB_META[activeSubHebel].color}15` : "transparent" }}
