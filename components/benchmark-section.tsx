@@ -174,20 +174,20 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
             
             {/* Stacked Bar: Indikation + Intensitaet (mit Sub-Hebeln) */}
             {(() => {
-              // Berechne relative Anteile basierend auf Potenzial-EUR
-              const indPot = benchmark.indikation.pot_net_euro;
-              const intPot = benchmark.intensitaet.pot_net_euro;
+              // Berechne relative Anteile basierend auf Potenzial-Analysen
+              const indPot = benchmark.indikation.analysen;
+              const intPot = benchmark.intensitaet.analysen;
               const totalPot = indPot + intPot;
               const indPct = totalPot > 0 ? (indPot / totalPot) * 100 : 50;
               const intPct = totalPot > 0 ? (intPot / totalPot) * 100 : 50;
               
               // Sub-Hebel Anteile innerhalb Intensitaet
-              const subTotal = benchmark.intensitaet.subHebel.multiCaseRate.pot_net_euro + 
-                               benchmark.intensitaet.subHebel.frequenz.pot_net_euro + 
-                               benchmark.intensitaet.subHebel.monitorZeit.pot_net_euro;
-              const multiPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.multiCaseRate.pot_net_euro / subTotal) * intPct : intPct / 3;
-              const freqPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.frequenz.pot_net_euro / subTotal) * intPct : intPct / 3;
-              const monPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.monitorZeit.pot_net_euro / subTotal) * intPct : intPct / 3;
+              const subTotal = benchmark.intensitaet.subHebel.multiCaseRate.analysen + 
+                               benchmark.intensitaet.subHebel.frequenz.analysen + 
+                               benchmark.intensitaet.subHebel.monitorZeit.analysen;
+              const multiPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.multiCaseRate.analysen / subTotal) * intPct : intPct / 3;
+              const freqPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.frequenz.analysen / subTotal) * intPct : intPct / 3;
+              const monPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.monitorZeit.analysen / subTotal) * intPct : intPct / 3;
               
               return (
                 <div className="mb-3">
