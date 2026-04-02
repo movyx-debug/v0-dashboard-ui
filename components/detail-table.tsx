@@ -239,8 +239,8 @@ function StackedBar({ row }: { row: BenchmarkRow }) {
   );
 }
 
-/* ── Combined value cells with shared tooltip ────────────────── */
-function ValueCellsGroup({ row }: { row: BenchmarkRow }) {
+/* ── Shared tooltip content for all 4 sub-values ────────────── */
+function SubValuesTooltipContent({ row }: { row: BenchmarkRow }) {
   // Helper to check if kunde is worse than benchmark
   const isWorse = (subKey: SubKey) => {
     const { kunde, benchmark } = getSubValues(row, subKey);
@@ -251,80 +251,147 @@ function ValueCellsGroup({ row }: { row: BenchmarkRow }) {
     );
   };
 
+  // Calculate Intensitaet (sum of 3 sub-hebel)
+  const intensitaetPct = row.multiCaseRate_pct + row.frequenz_pct + row.monitorZeit_pct;
+  const indikationPct = row.indikation_pct;
+
+  return (
+    <TooltipContent
+      side="top"
+      className="bg-card text-foreground border shadow-lg px-4 py-3"
+    >
+      <p className="text-[10px] text-muted-foreground mb-2.5 font-medium uppercase tracking-wider">
+        Kennzahlen im Vergleich
+      </p>
+      
+      {/* Indikation */}
+      <div className="mb-2 pb-2 border-b border-border/50">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: INDIKATION_COLOR }} />
+          <span className="text-[11px] font-semibold" style={{ color: INDIKATION_COLOR }}>Indikation</span>
+        </div>
+        <div className="grid grid-cols-[1fr_1fr_auto] gap-x-3 text-[10px] ml-4">
+          <div className="flex flex-col">
+            <span className="text-muted-foreground/70 text-[8px] uppercase">Kunde</span>
+            <span className="font-semibold tabular-nums" style={{ color: isWorse("indikation") ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
+              {fmtDe(getSubValues(row, "indikation").kunde)}%
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-muted-foreground/70 text-[8px] uppercase">Benchmark</span>
+            <span className="font-semibold tabular-nums text-primary">
+              {fmtDe(getSubValues(row, "indikation").benchmark)}%
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-12 h-[5px] rounded-full bg-secondary overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${Math.min(indikationPct, 100)}%`, backgroundColor: INDIKATION_COLOR }}
+              />
+            </div>
+            <span className="text-[10px] font-semibold tabular-nums w-[28px] text-right" style={{ color: INDIKATION_COLOR }}>
+              {Math.round(indikationPct)}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Intensitaet (Gesamt) */}
+      <div className="mb-1.5">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: INTENSITAET_COLOR }} />
+          <span className="text-[11px] font-semibold" style={{ color: INTENSITAET_COLOR }}>Intensitat</span>
+          <div className="flex-1" />
+          <div className="flex items-center gap-1.5">
+            <div className="w-12 h-[5px] rounded-full bg-secondary overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${Math.min(intensitaetPct, 100)}%`, backgroundColor: INTENSITAET_COLOR }}
+              />
+            </div>
+            <span className="text-[10px] font-semibold tabular-nums w-[28px] text-right" style={{ color: INTENSITAET_COLOR }}>
+              {Math.round(intensitaetPct)}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Sub-Hebel der Intensitaet */}
+      <div className="ml-3 pl-2 border-l border-border/50 space-y-1.5">
+        {(["multiCaseRate", "frequenz", "monitorZeit"] as SubKey[]).map((subKey) => {
+          const meta = SUB_COLORS[subKey];
+          const { kunde, benchmark } = getSubValues(row, subKey);
+          const pctField = `${subKey}_pct` as keyof BenchmarkRow;
+          const pct = row[pctField] as number;
+          const worse = isWorse(subKey);
+          return (
+            <div key={subKey}>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: meta.color }} />
+                <span className="text-[10px] font-medium" style={{ color: meta.color }}>{meta.label}</span>
+              </div>
+              <div className="grid grid-cols-[1fr_1fr_auto] gap-x-3 text-[10px] ml-3">
+                <div className="flex flex-col">
+                  <span className="text-muted-foreground/70 text-[8px] uppercase">Kunde</span>
+                  <span className="font-semibold tabular-nums" style={{ color: worse ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
+                    {fmtDe(kunde)} {meta.unit}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-muted-foreground/70 text-[8px] uppercase">Benchmark</span>
+                  <span className="font-semibold tabular-nums text-primary">
+                    {fmtDe(benchmark)} {meta.unit}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-10 h-[4px] rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: meta.color }}
+                    />
+                  </div>
+                  <span className="text-[9px] font-medium tabular-nums w-[24px] text-right" style={{ color: meta.color }}>
+                    {Math.round(pct)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </TooltipContent>
+  );
+}
+
+/* ── Single value cell (rendered in its own TableCell) ───────── */
+function ValueCell({ row, subKey }: { row: BenchmarkRow; subKey: SubKey }) {
+  const meta = SUB_COLORS[subKey];
+  const { kunde, benchmark } = getSubValues(row, subKey);
+  
+  // Determine if kunde is worse than benchmark
+  const isWorse = kunde !== null && (
+    subKey === "frequenz" || subKey === "monitorZeit" 
+      ? kunde < benchmark
+      : kunde > benchmark
+  );
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex">
-          {SUB_KEYS.map((subKey) => {
-            const meta = SUB_COLORS[subKey];
-            const { kunde, benchmark } = getSubValues(row, subKey);
-            const worse = isWorse(subKey);
-            return (
-              <div key={subKey} className="flex flex-col items-center cursor-default min-w-[75px] px-2 py-2">
-                <span
-                  className="text-[10px] tabular-nums font-semibold"
-                  style={{ color: worse ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}
-                >
-                  {fmtDe(kunde)} <span className="text-[8px] font-normal text-muted-foreground">{meta.unit}</span>
-                </span>
-                <span className="text-[9px] tabular-nums text-primary">
-                  {fmtDe(benchmark)} <span className="text-[8px] font-normal text-muted-foreground/70">{meta.unit}</span>
-                </span>
-              </div>
-            );
-          })}
+        <div className="flex flex-col items-center cursor-default">
+          <span
+            className="text-[10px] tabular-nums font-semibold"
+            style={{ color: isWorse ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}
+          >
+            {fmtDe(kunde)} <span className="text-[8px] font-normal text-muted-foreground">{meta.unit}</span>
+          </span>
+          <span className="text-[9px] tabular-nums text-primary">
+            {fmtDe(benchmark)} <span className="text-[8px] font-normal text-muted-foreground/70">{meta.unit}</span>
+          </span>
         </div>
       </TooltipTrigger>
-      <TooltipContent
-        side="top"
-        className="bg-card text-foreground border shadow-lg px-4 py-3"
-      >
-        <p className="text-[10px] text-muted-foreground mb-2 font-medium uppercase tracking-wider">
-          Kennzahlen im Vergleich
-        </p>
-        <div className="grid grid-cols-[auto_1fr_1fr_1fr] gap-x-3 gap-y-1.5 text-[11px]">
-          {/* Header row */}
-          <div />
-          <span className="text-muted-foreground text-center font-medium">Kunde</span>
-          <span className="text-muted-foreground text-center font-medium">Benchmark</span>
-          <span className="text-muted-foreground text-center font-medium">Pot. %</span>
-          
-          {/* Data rows */}
-          {SUB_KEYS.map((subKey) => {
-            const meta = SUB_COLORS[subKey];
-            const { kunde, benchmark } = getSubValues(row, subKey);
-            const pctField = `${subKey}_pct` as keyof BenchmarkRow;
-            const pct = row[pctField] as number;
-            const worse = isWorse(subKey);
-            return (
-              <React.Fragment key={subKey}>
-                <div className="flex items-center gap-1.5">
-                  <span
-                    className="h-2 w-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: meta.color }}
-                  />
-                  <span className="font-medium" style={{ color: meta.color }}>{meta.label}</span>
-                </div>
-                <span 
-                  className="text-center font-semibold tabular-nums"
-                  style={{ color: worse ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}
-                >
-                  {fmtDe(kunde)} {meta.unit}
-                </span>
-                <span className="text-center font-semibold tabular-nums text-primary">
-                  {fmtDe(benchmark)} {meta.unit}
-                </span>
-                <span 
-                  className="text-center font-semibold tabular-nums"
-                  style={{ color: meta.color }}
-                >
-                  {Math.round(pct)}%
-                </span>
-              </React.Fragment>
-            );
-          })}
-        </div>
-      </TooltipContent>
+      <SubValuesTooltipContent row={row} />
     </Tooltip>
   );
 }
@@ -510,9 +577,11 @@ export default function DetailTable({
                   <TableCell className="px-3 py-2">
                     <StackedBar row={row} />
                   </TableCell>
-                  <TableCell colSpan={4} className="p-0">
-                    <ValueCellsGroup row={row} />
-                  </TableCell>
+                  {SUB_KEYS.map((key) => (
+                    <TableCell key={key} className="px-2 py-2">
+                      <ValueCell row={row} subKey={key} />
+                    </TableCell>
+                  ))}
                 </TableRow>
               ))}
             </TableBody>
