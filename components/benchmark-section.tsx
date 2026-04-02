@@ -388,7 +388,11 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     </div>
                     <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
-                      <span className="text-base font-bold tabular-nums text-foreground">{fmtInt(benchmark.hauptpot_net_analysen)} <span className="text-[10px] font-normal text-muted-foreground">Analysen</span></span>
+                      <span className="text-base font-bold tabular-nums text-foreground">
+                        {fmtInt(benchmark.hauptpot_net_analysen)} <span className="text-[10px] font-normal text-muted-foreground">Analysen</span>
+                        <span className="text-[10px] font-normal text-muted-foreground"> / </span>
+                        <span className="text-primary">{fmtInt(benchmark.hauptpot_net_euro)} €</span>
+                      </span>
                     </div>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
@@ -404,6 +408,8 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
               const diffPctVal = benchmark.indikation.benchmark > 0 
                 ? (diffVal / benchmark.indikation.benchmark) * 100 
                 : 0;
+              // Euro berechnen: Anteil * Gesamt-Euro
+              const euroVal = benchmark.hauptpot_net_euro * (benchmark.indikation.pct / 100);
               return (
                 <div 
                   className="rounded-lg border-l-[3px] p-3 transition-all"
@@ -439,7 +445,9 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
                       <span className="text-base font-bold tabular-nums" style={{ color: HAUPT_META.indikation.color }}>
-                        {fmtInt(benchmark.indikation.analysen)} <span className="text-[10px] font-normal text-muted-foreground">({fmtPct(benchmark.indikation.pct)})</span>
+                        {fmtInt(benchmark.indikation.analysen)} <span className="text-[10px] font-normal text-muted-foreground">A</span>
+                        <span className="text-[10px] font-normal text-muted-foreground"> / </span>
+                        <span className="text-primary">{fmtInt(euroVal)} €</span>
                       </span>
                     </div>
                   </div>
@@ -456,6 +464,8 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
               const diffPctVal = benchmark.intensitaet.benchmark > 0 
                 ? (diffVal / benchmark.intensitaet.benchmark) * 100 
                 : 0;
+              // Euro berechnen: Anteil * Gesamt-Euro
+              const euroVal = benchmark.hauptpot_net_euro * (benchmark.intensitaet.pct / 100);
               return (
                 <div 
                   className="rounded-lg border-l-[3px] p-3 transition-all"
@@ -493,7 +503,9 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
                       <span className="text-base font-bold tabular-nums" style={{ color: HAUPT_META.intensitaet.color }}>
-                        {fmtInt(benchmark.intensitaet.analysen)} <span className="text-[10px] font-normal text-muted-foreground">({fmtPct(benchmark.intensitaet.pct)})</span>
+                        {fmtInt(benchmark.intensitaet.analysen)} <span className="text-[10px] font-normal text-muted-foreground">A</span>
+                        <span className="text-[10px] font-normal text-muted-foreground"> / </span>
+                        <span className="text-primary">{fmtInt(euroVal)} €</span>
                       </span>
                     </div>
                   </div>
@@ -509,14 +521,17 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
               const subData = benchmark.intensitaet.subHebel[activeSubHebel];
               const subMeta = INTENSITAET_SUB_META[activeSubHebel];
               const diffVal = subData.kunde - subData.benchmark;
-              // Für Frequenz ist höher = besser (mehr Tage zwischen Anforderungen)
-              // Für Monitorzeit ist niedriger = besser
-              // Für Monitorfallrate ist niedriger = besser
+              // Fuer Frequenz ist hoeher = besser (mehr Tage zwischen Anforderungen)
+              // Fuer Monitorzeit ist niedriger = besser
+              // Fuer Monitorfallrate ist niedriger = besser
               const isHigherBad = activeSubHebel !== "frequenz";
               const diffPctVal = subData.benchmark > 0 
                 ? (diffVal / subData.benchmark) * 100 
                 : 0;
               const showAsNegative = isHigherBad ? diffVal > 0 : diffVal < 0;
+              // Euro berechnen: Sub-Hebel Anteil innerhalb Intensitaet * Intensitaet-Euro
+              const intensitaetEuro = benchmark.hauptpot_net_euro * (benchmark.intensitaet.pct / 100);
+              const euroVal = intensitaetEuro * (subData.pct / 100);
               return (
                 <div 
                   className="rounded-lg border-l-[3px] p-3 transition-all"
@@ -557,7 +572,9 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
                       <span className="text-base font-bold tabular-nums" style={{ color: subMeta.color }}>
-                        {fmtInt(subData.analysen)} <span className="text-[10px] font-normal text-muted-foreground">({fmtPct(subData.pct)})</span>
+                        {fmtInt(subData.analysen)} <span className="text-[10px] font-normal text-muted-foreground">A</span>
+                        <span className="text-[10px] font-normal text-muted-foreground"> / </span>
+                        <span className="text-primary">{fmtInt(euroVal)} €</span>
                       </span>
                     </div>
                   </div>
