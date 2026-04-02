@@ -127,18 +127,19 @@ function HebelAndValuesCells({ row }: { row: BenchmarkRow }) {
 
   // Calculate Intensitaet (sum of 3 sub-hebel)
   const intensitaetPct = row.multiCaseRate_pct + row.frequenz_pct + row.monitorZeit_pct;
+  const indikationPct = row.indikation_pct;
 
-  // Stacked bar segments
-  const segments = SUBS_HEBEL.map((s) => ({
-    ...s,
-    pct: row[s.key] as number,
-  })).filter((s) => s.pct > 0);
+  // Only 2 segments: Indikation + Intensitaet (aggregated)
+  const segments = [
+    { key: "indikation", pct: indikationPct, color: INDIKATION_COLOR },
+    { key: "intensitaet", pct: intensitaetPct, color: INTENSITAET_COLOR },
+  ].filter((s) => s.pct > 0);
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <div className="grid grid-cols-[100px_1fr_1fr_1fr_1fr] cursor-default">
-          {/* Hebel stacked bar */}
+          {/* Hebel stacked bar - only 2 bars: Indikation vs Intensitaet */}
           <div className="flex items-center px-3 py-2">
             <div className="flex h-[8px] w-full min-w-[80px] rounded-full overflow-hidden bg-secondary">
               {segments.map((seg) => (
