@@ -37,7 +37,7 @@ const HAUPT_META = {
     label: "Indikation",
     desc: "Anteil der Falle mit initialer Laboranforderung",
     longDesc:
-      "Vergleich der Indikationsquote: In wie viel Prozent der Falle wird der Parameter initial angefordert? Ein hoherer Wert als der Benchmark kann darauf hindeuten, dass der Parameter bei zu vielen Patienten routinemassig bestellt wird.",
+      "Anteil der stationaren Falle, bei denen mindestens eine Laboranforderung erfolgt ist. Ein hoherer Wert als der Benchmark deutet auf haufigere Routineanforderungen hin.",
     unit: "%",
   },
   intensitaet: {
@@ -47,7 +47,7 @@ const HAUPT_META = {
     label: "Intensitat",
     desc: "Anforderungen pro indiziertem Fall",
     longDesc:
-      "Die Intensitat beschreibt, wie viele Anforderungen pro indiziertem Fall erfolgen. Dieser Hebel setzt sich zusammen aus der Monitorfallrate (wie viele Falle ins Monitoring gehen), der Frequenz (wie haufig nachbestellt wird) und der Monitorzeit (wie lange das Monitoring dauert).",
+      "Anzahl der Laboranalysen pro indiziertem Fall. Setzt sich zusammen aus Monitorfallrate, Frequenz und Monitorzeit.",
     unit: "A/F",
   },
 } as const;
@@ -61,7 +61,7 @@ const INTENSITAET_SUB_META = {
     label: "Monitorfallrate",
     desc: "Gehen zu viele Falle ins Monitoring?",
     longDesc:
-      "Vergleich der MultiCaseRate: Welcher Anteil der Falle mit Erstanforderung wird wiederholt untersucht (Monitoring)? Ein hoherer Wert bedeutet, dass mehr Patienten als notig ins Monitoring gehen.",
+      "Anteil der indizierten Falle mit Mehrfachanforderungen. Ein hoherer Wert bedeutet, dass mehr Patienten ins Monitoring gehen als vergleichbare Hauser.",
     unit: "%",
   },
   frequenz: {
@@ -71,7 +71,7 @@ const INTENSITAET_SUB_META = {
     label: "Frequenz",
     desc: "Wird der Parameter zu haufig nachbestellt?",
     longDesc:
-      "Vergleich der Anforderungsfrequenz: Wie viele Tage liegen im Schnitt zwischen zwei Anforderungen? Ein niedrigerer Wert als der Benchmark bedeutet, dass haufiger als notig nachbestellt wird.",
+      "Mittlere Zeit zwischen zwei Anforderungen. Ein niedrigerer Wert als der Benchmark bedeutet haufigere Nachbestellungen.",
     unit: "Tage",
   },
   monitorZeit: {
@@ -81,7 +81,7 @@ const INTENSITAET_SUB_META = {
     label: "Monitorzeit",
     desc: "Dauert das Monitoring zu lange?",
     longDesc:
-      "Vergleich der Monitoring-Zeitspanne: Wie viele Tage wird ein Patient im Schnitt uberwacht? Ein hoherer Wert deutet auf unnotig langes Monitoring hin.",
+      "Zeitraum, uber den ein Monitoring bzw. Mehrfachanforderungen im Schnitt durchgefuhrt werden. Ein hoherer Wert deutet auf langeres Monitoring hin.",
     unit: "Tage",
   },
 } as const;
@@ -396,7 +396,7 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     </div>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Dieser Wert zeigt, wie viele Laboranalysen pro stationarem Fall durchgefuhrt werden. Er setzt sich zusammen aus der <span className="font-medium text-foreground">Indikation</span> (bei wie vielen Fallen wird uberhaupt Labor angefordert) und der <span className="font-medium text-foreground">Intensitat</span> (wie viele Anforderungen pro indiziertem Fall). Klicken Sie auf einen Hebel, um Details zu sehen.
+                    Anzahl der Laboranalysen pro stationarem Fall. Setzt sich zusammen aus <span className="font-medium text-foreground">Indikation</span> (Anteil Falle mit Laboranforderung) und <span className="font-medium text-foreground">Intensitat</span> (Analysen pro indiziertem Fall).
                   </p>
                 </div>
               );
