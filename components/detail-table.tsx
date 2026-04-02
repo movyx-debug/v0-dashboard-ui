@@ -400,24 +400,26 @@ export default function DetailTable({
               {pageData.map((row, idx) => (
                 <TableRow
                   key={`${row.parameter_name}-${row.drg}-${row.fachabteilung}-${idx}`}
-                  className="hover:bg-muted/30"
+                  className="hover:bg-muted/30 cursor-pointer transition-colors"
+                  onClick={() => {
+                    onSelectParam(row.parameter_name);
+                    onSelectDrg(row.drg);
+                    onSelectFach(row.fachabteilung);
+                  }}
                 >
                   <TableCell
-                    className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap max-w-[180px] truncate"
-                    onClick={() => onSelectParam(row.parameter_name)}
+                    className="px-2.5 py-2 text-[11px] font-medium whitespace-nowrap max-w-[180px] truncate"
                     title={row.parameter_name}
                   >
                     {row.parameter_name}
                   </TableCell>
                   <TableCell
-                    className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap"
-                    onClick={() => onSelectDrg(row.drg)}
+                    className="px-2.5 py-2 text-[11px] font-medium whitespace-nowrap"
                   >
                     {row.drg}
                   </TableCell>
                   <TableCell
-                    className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap max-w-[140px] truncate"
-                    onClick={() => onSelectFach(row.fachabteilung)}
+                    className="px-2.5 py-2 text-[11px] font-medium whitespace-nowrap max-w-[140px] truncate"
                     title={row.fachabteilung}
                   >
                     {row.fachabteilung}
