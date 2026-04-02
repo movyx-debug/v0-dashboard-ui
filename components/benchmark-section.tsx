@@ -115,62 +115,63 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
   return (
     <TooltipProvider delayDuration={150}>
       <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-        {/* Single horizontal cockpit row */}
-        <div className="px-5 py-4 flex items-center gap-5 flex-wrap lg:flex-nowrap">
-          {/* ── LEFT: Main EUR result ──────────────────────── */}
-          <div className="flex-shrink-0 min-w-[180px]">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-0.5">
+        {/* Single horizontal cockpit row - 4 sections with equal height */}
+        <div className="px-5 py-4 grid grid-cols-[auto_1px_auto_1px_1fr_1px_auto] gap-5 items-stretch">
+          {/* ── Section 1: Netto Einsparpotenzial ──────────────────────── */}
+          <div className="flex flex-col min-w-[180px]">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               {title}
             </p>
-            <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-extrabold text-foreground tracking-tight leading-none tabular-nums">
-                {fmtInt(benchmark.hauptpot_net_euro)}
-              </p>
-              <span className="text-sm font-semibold text-muted-foreground">
-                EUR
-              </span>
-              <span
-                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-md ${
-                  isAbove
-                    ? "bg-destructive/10 text-destructive"
-                    : "bg-primary/10 text-primary"
-                }`}
-              >
-                {isAbove ? (
-                  <TrendingUp className="h-3 w-3" />
-                ) : (
-                  <TrendingDown className="h-3 w-3" />
-                )}
-                {isAbove ? "+" : ""}
-                {fmtPct(Math.abs(diffPct))}
-              </span>
-            </div>
-            <div className="mt-1.5 space-y-0 text-[10px] tabular-nums">
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground/70">Brutto</span>
-                <span className="text-muted-foreground">{fmtInt(Math.round(benchmark.hauptpot_brut_euro))} EUR</span>
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-extrabold text-foreground tracking-tight leading-none tabular-nums">
+                  {fmtInt(benchmark.hauptpot_net_euro)}
+                </p>
+                <span className="text-sm font-semibold text-muted-foreground">
+                  EUR
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-md ${
+                    isAbove
+                      ? "bg-destructive/10 text-destructive"
+                      : "bg-primary/10 text-primary"
+                  }`}
+                >
+                  {isAbove ? (
+                    <TrendingUp className="h-3 w-3" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3" />
+                  )}
+                  {isAbove ? "+" : ""}
+                  {fmtPct(Math.abs(diffPct))}
+                </span>
               </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-red-400/60">Erlosverluste</span>
-                <span className="text-red-400/80">-{fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-primary/70">Analysen</span>
-                <span className="text-primary">{fmtInt(benchmark.hauptpot_net_analysen)} ({benchmark.total_analysen > 0 ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100) : "0%"})</span>
+              <div className="mt-1.5 space-y-0 text-[10px] tabular-nums">
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground/70">Brutto</span>
+                  <span className="text-muted-foreground">{fmtInt(Math.round(benchmark.hauptpot_brut_euro))} EUR</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-red-400/60">Erlosverluste</span>
+                  <span className="text-red-400/80">-{fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-primary/70">Analysen</span>
+                  <span className="text-primary">{fmtInt(benchmark.hauptpot_net_analysen)} ({benchmark.total_analysen > 0 ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100) : "0%"})</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* ── Divider ────────────────────────────────────── */}
-          <div className="hidden lg:block w-px self-stretch bg-border" />
+          <div className="bg-border" />
 
-          {/* ── CENTER: Potenzial-Hebel (2 Haupt + 3 Sub unter Intensitat) ───── */}
-          <div className="flex-shrink-0">
-            <div className="flex items-center gap-2 mb-2">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-                Potenzial-Hebel / Anteil am Potenzial
-              </p>
-            </div>
+          {/* ── Section 2: Potenzial-Hebel ───── */}
+          <div className="flex flex-col">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+              Potenzial-Hebel / Anteil am Potenzial
+            </p>
+            <div className="flex-1 flex items-center">
             
             <div className="flex gap-3">
               {/* Indikation tile */}
@@ -348,15 +349,18 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 </div>
               </div>
             </div>
+            </div>
           </div>
 
           {/* ── Divider ────────────────────────────────────── */}
-          <div className="hidden lg:block w-px self-stretch bg-border" />
+          <div className="bg-border" />
 
-          {/* ── RIGHT: Context-sensitive explanation area + Kennzahlen ───── */}
-          <div className="flex-1 flex gap-4 min-w-0">
-            {/* Erklaerungsbereich */}
-            <div className="flex-1 min-w-0">
+          {/* ── Section 3: Benchmarkvergleich ───── */}
+          <div className="flex flex-col min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+              Benchmarkvergleich
+            </p>
+            <div className="flex-1 flex flex-col justify-center">
             {/* Default: Analysen pro Fall */}
             {!activeHaupt && (() => {
               const diffVal = benchmark.analysen_pro_fall_kunde - benchmark.analysen_pro_fall_benchmark;
@@ -365,11 +369,6 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 : 0;
               return (
                 <div className="rounded-lg border-l-[3px] border-border/50 bg-muted/30 p-3 transition-all">
-                  <div className="flex items-center gap-2 mb-2">
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-                      Analysen pro Fall
-                    </p>
-                  </div>
                   {/* 4 Werte mit Labels - Grid mit festen Spalten */}
                   <div className="grid grid-cols-[minmax(70px,1fr)_minmax(70px,1fr)_minmax(70px,1fr)_minmax(140px,1.5fr)] gap-4 mb-2">
                     <div className="flex flex-col">
@@ -585,9 +584,17 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
               );
             })()}
             </div>
+          </div>
 
-            {/* Kennzahlen rechts daneben - Fälle/Analysen oben, Benchmark unten */}
-            <div className="flex-shrink-0 border-l border-border/40 pl-4 flex flex-col">
+          {/* ── Divider ────────────────────────────────────── */}
+          <div className="bg-border" />
+
+          {/* ── Section 4: Grundkennzahlen ───── */}
+          <div className="flex flex-col">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+              Grundkennzahlen
+            </p>
+            <div className="flex-1 flex flex-col justify-center">
               {/* Fälle + Analysen nebeneinander */}
               <div className="flex gap-4">
                 {/* Fälle Spalte */}
