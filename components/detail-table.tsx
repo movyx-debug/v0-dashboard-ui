@@ -42,10 +42,21 @@ const fmtEur = (n: number) =>
 /* ── Sub-benchmark meta ──────────────────────────────────────── */
 const SUB_COLORS = {
   indikation: { color: "#5b8ab5", label: "Indikation", unit: "%" },
-  multiCaseRate: { color: "#cb7b5a", label: "MultiCaseRate", unit: "%" },
-  frequenz: { color: "#4da8a0", label: "Frequenz", unit: "Tage" },
-  monitorZeit: { color: "#c07a8e", label: "Monitorzeit", unit: "Tage" },
+  multiCaseRate: { color: "#d97706", label: "Monitorfallrate", unit: "%" },
+  frequenz: { color: "#ca8a04", label: "Frequenz", unit: "Tage" },
+  monitorZeit: { color: "#92400e", label: "Monitorzeit", unit: "Tage" },
 } as const;
+
+/* ── Hebel colors (matching top-items-table) ────────────────── */
+const INDIKATION_COLOR = "#5b8ab5";
+const INTENSITAET_COLOR = "#e07a34";
+
+const SUBS_HEBEL = [
+  { key: "indikation_pct" as const, color: INDIKATION_COLOR, label: "Indikation", isIntensitaet: false },
+  { key: "multiCaseRate_pct" as const, color: "#d97706", label: "Monitorfallrate", isIntensitaet: true },
+  { key: "frequenz_pct" as const, color: "#ca8a04", label: "Frequenz", isIntensitaet: true },
+  { key: "monitorZeit_pct" as const, color: "#92400e", label: "Monitorzeit", isIntensitaet: true },
+];
 
 type SubKey = keyof typeof SUB_COLORS;
 const SUB_KEYS: SubKey[] = ["indikation", "multiCaseRate", "frequenz", "monitorZeit"];
@@ -102,32 +113,158 @@ const PHASE_COLORS = ["#4a7fad", "#5b8ab5", "#8bb0d0"];
 const PHASE_RATIOS = [0.42, 0.38, 0.20];
 const PHASE_NAMES = ["Aufnahme", "Verlauf", "Entlass"];
 
-/* ── Colored mini bar with tooltip ──────────────────────────── */
-function SubBar({ row, subKey }: { row: BenchmarkRow; subKey: SubKey }) {
-  const meta = SUB_COLORS[subKey];
-  const pctField = `${subKey}_pct` as keyof BenchmarkRow;
-  const pct = row[pctField] as number;
-  const { kunde, benchmark } = getSubValues(row, subKey);
+/* ── Stacked bar with hover popup (like in top-items-table) ── */
+function StackedBar({ row }: { row: BenchmarkRow }) {
+  const segments = SUBS_HEBEL.map((s) => ({
+    ...s,
+    pct: row[s.key] as number,
+  })).filter((s) => s.pct > 0);
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-1.5 cursor-default min-w-[70px]">
-          <div className="flex-1 h-[6px] rounded-full bg-secondary overflow-hidden">
+        <div className="flex h-[8px] w-full min-w-[80px] rounded-full overflow-hidden bg-secondary cursor-default">
+          {segments.map((seg) => (
             <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{
-                width: `${Math.min(Math.max(pct, 2), 100)}%`,
-                backgroundColor: meta.color,
-                opacity: pct === 0 ? 0.15 : 1,
-              }}
+              key={seg.key}
+              className="h-full transition-all duration-300 first:rounded-l-full last:rounded-r-full border-r border-white/80 last:border-r-0"
+              style={{ width: `${seg.pct}%`, backgroundColor: seg.color }}
             />
+          ))}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="bg-card text-foreground border shadow-lg px-3 py-2.5"
+      >
+        <p className="text-[10px] text-muted-foreground mb-2 font-medium uppercase tracking-wider">
+          Hebelverteilung
+        </p>
+        <div className="flex flex-col gap-1.5">
+          {/* Indikation */}
+          <div className="flex items-center gap-2">
+            <span
+              className="h-2 w-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: INDIKATION_COLOR }}
+            />
+            <span className="text-[11px] text-foreground w-[90px]">
+              Indikation
+            </span>
+            <div className="w-16 h-[5px] rounded-full bg-secondary overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.min(row.indikation_pct, 100)}%`,
+                  backgroundColor: INDIKATION_COLOR,
+                  opacity: row.indikation_pct === 0 ? 0.15 : 1,
+                }}
+              />
+            </div>
+            <span
+              className="text-[11px] font-semibold tabular-nums w-[32px] text-right"
+              style={{ color: row.indikation_pct > 0 ? INDIKATION_COLOR : "hsl(var(--muted-foreground))" }}
+            >
+              {Math.round(row.indikation_pct)}%
+            </span>
           </div>
+          
+          {/* Intensitaet Gesamt */}
+          {(() => {
+            const intensitaetPct = row.multiCaseRate_pct + row.frequenz_pct + row.monitorZeit_pct;
+            return (
+              <div className="flex items-center gap-2">
+                <span
+                  className="h-2 w-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: INTENSITAET_COLOR }}
+                />
+                <span className="text-[11px] text-foreground w-[90px] font-medium">
+                  Intensitat
+                </span>
+                <div className="w-16 h-[5px] rounded-full bg-secondary overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${Math.min(intensitaetPct, 100)}%`,
+                      backgroundColor: INTENSITAET_COLOR,
+                      opacity: intensitaetPct === 0 ? 0.15 : 1,
+                    }}
+                  />
+                </div>
+                <span
+                  className="text-[11px] font-semibold tabular-nums w-[32px] text-right"
+                  style={{ color: intensitaetPct > 0 ? INTENSITAET_COLOR : "hsl(var(--muted-foreground))" }}
+                >
+                  {Math.round(intensitaetPct)}%
+                </span>
+              </div>
+            );
+          })()}
+          
+          {/* Sub-Hebel der Intensitaet (eingerueckt) */}
+          <div className="ml-3 pl-2 border-l border-border/50 flex flex-col gap-1">
+            {SUBS_HEBEL.filter(s => s.isIntensitaet).map((s) => {
+              const pct = row[s.key] as number;
+              return (
+                <div key={s.key} className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: s.color }}
+                  />
+                  <span className="text-[10px] text-muted-foreground w-[78px]">
+                    {s.label}
+                  </span>
+                  <div className="w-12 h-[4px] rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(pct, 100)}%`,
+                        backgroundColor: s.color,
+                        opacity: pct === 0 ? 0.15 : 1,
+                      }}
+                    />
+                  </div>
+                  <span
+                    className="text-[10px] font-medium tabular-nums w-[28px] text-right"
+                    style={{ color: pct > 0 ? s.color : "hsl(var(--muted-foreground))" }}
+                  >
+                    {Math.round(pct)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+/* ── Value cell showing Kunde / Benchmark ────────────────────── */
+function ValueCell({ row, subKey }: { row: BenchmarkRow; subKey: SubKey }) {
+  const meta = SUB_COLORS[subKey];
+  const { kunde, benchmark } = getSubValues(row, subKey);
+  const pctField = `${subKey}_pct` as keyof BenchmarkRow;
+  const pct = row[pctField] as number;
+  
+  // Determine if kunde is worse than benchmark
+  const isWorse = kunde !== null && (
+    subKey === "frequenz" || subKey === "monitorZeit" 
+      ? kunde < benchmark  // Lower is worse for time-based metrics
+      : kunde > benchmark  // Higher is worse for rate-based metrics
+  );
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex flex-col items-center cursor-default min-w-[70px]">
           <span
-            className="text-[10px] tabular-nums font-medium w-[28px] text-right"
-            style={{ color: pct > 0 ? meta.color : "hsl(var(--muted-foreground))" }}
+            className="text-[10px] tabular-nums font-semibold"
+            style={{ color: isWorse ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}
           >
-            {Math.round(pct)}%
+            {fmtDe(kunde)} <span className="text-[8px] font-normal text-muted-foreground">{meta.unit}</span>
+          </span>
+          <span className="text-[9px] tabular-nums text-primary">
+            {fmtDe(benchmark)} <span className="text-[8px] font-normal text-muted-foreground/70">{meta.unit}</span>
           </span>
         </div>
       </TooltipTrigger>
@@ -147,11 +284,11 @@ function SubBar({ row, subKey }: { row: BenchmarkRow; subKey: SubKey }) {
         </p>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
           <span className="text-muted-foreground">Kunde</span>
-          <span className="text-right font-semibold tabular-nums">
+          <span className="text-right font-semibold tabular-nums" style={{ color: isWorse ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
             {fmtDe(kunde)} {meta.unit}
           </span>
           <span className="text-muted-foreground">Benchmark</span>
-          <span className="text-right font-semibold tabular-nums">
+          <span className="text-right font-semibold tabular-nums text-primary">
             {fmtDe(benchmark)} {meta.unit}
           </span>
         </div>
@@ -161,26 +298,6 @@ function SubBar({ row, subKey }: { row: BenchmarkRow; subKey: SubKey }) {
             {Math.round(pct)}%
           </span>
         </div>
-        {/* Patientenphase breakdown (only for Indikation) */}
-        {subKey === "indikation" && pct > 0 && (
-          <div className="mt-1.5 pt-1.5 border-t">
-            <p className="text-[10px] text-muted-foreground mb-1">Patientenphase</p>
-            <div className="space-y-0.5">
-              {PHASE_NAMES.map((name, i) => (
-                <div key={name} className="flex items-center gap-1.5 text-[10px]">
-                  <span
-                    className="inline-block h-1.5 w-1.5 rounded-sm flex-shrink-0"
-                    style={{ backgroundColor: PHASE_COLORS[i] }}
-                  />
-                  <span className="text-muted-foreground flex-1">{name}</span>
-                  <span className="tabular-nums font-medium text-right" style={{ color: PHASE_COLORS[i] }}>
-                    {Math.round(PHASE_RATIOS[i] * 100)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </TooltipContent>
     </Tooltip>
   );
@@ -293,10 +410,13 @@ export default function DetailTable({
                 <HeadCell field="hauptpot_brut_euro" label="Pot. EUR" />
                 <HeadCell field="erlosverlust_euro" label="Erlosverluste" className="text-red-400" />
                 <HeadCell field="hauptpot_net_euro" label="Pot. EUR netto" className="font-semibold" />
+                <TableHead className="text-[10px] font-medium px-3 py-2 whitespace-nowrap text-center min-w-[100px]">
+                  Hebel
+                </TableHead>
                 {SUB_KEYS.map((key) => (
                   <TableHead
                     key={key}
-                    className="text-[10px] font-medium px-2 py-2 whitespace-nowrap cursor-pointer hover:bg-muted/50 transition-colors select-none text-center min-w-[85px]"
+                    className="text-[10px] font-medium px-2 py-2 whitespace-nowrap cursor-pointer hover:bg-muted/50 transition-colors select-none text-center min-w-[75px]"
                     onClick={() => toggleSort(`${key}_pct` as SortField)}
                   >
                     <span className="inline-flex items-center gap-1 justify-center">
@@ -361,9 +481,12 @@ export default function DetailTable({
                   <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums font-bold text-foreground whitespace-nowrap">
                     {fmtEur(row.hauptpot_net_euro)}
                   </TableCell>
+                  <TableCell className="px-3 py-2">
+                    <StackedBar row={row} />
+                  </TableCell>
                   {SUB_KEYS.map((key) => (
                     <TableCell key={key} className="px-2 py-2">
-                      <SubBar row={row} subKey={key} />
+                      <ValueCell row={row} subKey={key} />
                     </TableCell>
                   ))}
                 </TableRow>
