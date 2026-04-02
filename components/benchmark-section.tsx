@@ -369,6 +369,9 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 : 0;
               return (
                 <div className="rounded-lg border-l-[3px] border-border/50 bg-muted/30 p-3 transition-all">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+                    Anforderungen pro Fall
+                  </p>
                   {/* 4 Werte mit Labels - Grid mit festen Spalten */}
                   <div className="grid grid-cols-[minmax(70px,1fr)_minmax(70px,1fr)_minmax(70px,1fr)_minmax(140px,1.5fr)] gap-4 mb-2">
                     <div className="flex flex-col">
