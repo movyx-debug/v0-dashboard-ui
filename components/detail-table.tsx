@@ -66,8 +66,9 @@ type SortField =
   | "parameter_name"
   | "drg"
   | "fachabteilung"
-  | "analysen_pro_fall_kunde"
-  | "analysen_pro_fall_benchmark"
+  | "faelle_kunde"
+  | "faelle_benchmark"
+  | "analysen_kunde"
   | "hauptpot_net_analysen"
   | "hauptpot_brut_euro"
   | "erlosverlust_euro"
@@ -367,8 +368,9 @@ export default function DetailTable({
                 <HeadCell field="parameter_name" label="Parameter" align="left" />
                 <HeadCell field="drg" label="DRG" align="left" />
                 <HeadCell field="fachabteilung" label="Fachabteilung" align="left" />
-                <HeadCell field="analysen_pro_fall_kunde" label="A/F Kunde" />
-                <HeadCell field="analysen_pro_fall_benchmark" label="A/F Benchmark" />
+                <HeadCell field="faelle_kunde" label="Falle Kunde" />
+                <HeadCell field="faelle_benchmark" label="Falle Benchmark" />
+                <HeadCell field="analysen_kunde" label="Analysen Kunde" />
                 <HeadCell field="hauptpot_net_analysen" label="Pot. Analysen" />
                 <HeadCell field="hauptpot_brut_euro" label="Pot. EUR" />
                 <HeadCell field="erlosverlust_euro" label="Erlosverluste" className="text-red-400" />
@@ -420,13 +422,17 @@ export default function DetailTable({
                   >
                     {row.fachabteilung}
                   </TableCell>
-                  {/* A/F Kunde */}
+                  {/* Falle Kunde */}
                   <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
-                    {fmtDe(row.analysen_pro_fall_kunde)}
+                    {fmtInt(row.faelle_kunde)}
                   </TableCell>
-                  {/* A/F Benchmark */}
+                  {/* Falle Benchmark */}
+                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-primary whitespace-nowrap">
+                    {fmtInt(row.faelle_benchmark)}
+                  </TableCell>
+                  {/* Analysen Kunde */}
                   <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
-                    {fmtDe(row.analysen_pro_fall_benchmark)}
+                    {fmtInt(row.analysen_kunde)}
                   </TableCell>
                   {/* Pot. Analysen -- normal style like A/F Kunde */}
                   <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
