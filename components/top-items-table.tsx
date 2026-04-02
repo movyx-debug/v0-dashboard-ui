@@ -22,11 +22,15 @@ const fmtEur = (n: number) =>
   `${Math.round(n).toLocaleString("de-DE")} \u20AC`;
 
 /* ── Sub-benchmark colors & labels ───────────────────────────── */
+// Indikation: blau, Intensitat-SubHebel: Orange-Gelb-Braun Palette
+const INDIKATION_COLOR = "#5b8ab5";
+const INTENSITAET_COLOR = "#e07a34"; // aggregierte Intensitaet-Farbe (orange)
+
 const SUBS = [
-  { key: "indikation_pct" as const, color: "#5b8ab5", label: "Indikation" },
-  { key: "multiCaseRate_pct" as const, color: "#cb7b5a", label: "MultiCaseRate" },
-  { key: "frequenz_pct" as const, color: "#4da8a0", label: "Frequenz" },
-  { key: "monitorZeit_pct" as const, color: "#c07a8e", label: "Monitorzeit" },
+  { key: "indikation_pct" as const, color: INDIKATION_COLOR, label: "Indikation", isIntensitaet: false },
+  { key: "multiCaseRate_pct" as const, color: "#d97706", label: "Monitorfallrate", isIntensitaet: true }, // amber-600
+  { key: "frequenz_pct" as const, color: "#ca8a04", label: "Frequenz", isIntensitaet: true }, // yellow-600
+  { key: "monitorZeit_pct" as const, color: "#92400e", label: "Monitorzeit", isIntensitaet: true }, // amber-800 (braun)
 ];
 
 /* ── Stacked bar with hover popup ──────────────────────────── */
@@ -57,36 +61,98 @@ function StackedBar({ item }: { item: TopItem }) {
           Hebelverteilung
         </p>
         <div className="flex flex-col gap-1.5">
-          {SUBS.map((s) => {
-            const pct = item[s.key];
+          {/* Indikation */}
+          <div className="flex items-center gap-2">
+            <span
+              className="h-2 w-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: INDIKATION_COLOR }}
+            />
+            <span className="text-[11px] text-foreground w-[90px]">
+              Indikation
+            </span>
+            <div className="w-16 h-[5px] rounded-full bg-secondary overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.min(item.indikation_pct, 100)}%`,
+                  backgroundColor: INDIKATION_COLOR,
+                  opacity: item.indikation_pct === 0 ? 0.15 : 1,
+                }}
+              />
+            </div>
+            <span
+              className="text-[11px] font-semibold tabular-nums w-[32px] text-right"
+              style={{ color: item.indikation_pct > 0 ? INDIKATION_COLOR : "hsl(var(--muted-foreground))" }}
+            >
+              {Math.round(item.indikation_pct)}%
+            </span>
+          </div>
+          
+          {/* Intensitaet Gesamt */}
+          {(() => {
+            const intensitaetPct = item.multiCaseRate_pct + item.frequenz_pct + item.monitorZeit_pct;
             return (
-              <div key={s.key} className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <span
                   className="h-2 w-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: s.color }}
+                  style={{ backgroundColor: INTENSITAET_COLOR }}
                 />
-                <span className="text-[11px] text-foreground w-[90px]">
-                  {s.label}
+                <span className="text-[11px] text-foreground w-[90px] font-medium">
+                  Intensitat
                 </span>
                 <div className="w-16 h-[5px] rounded-full bg-secondary overflow-hidden">
                   <div
                     className="h-full rounded-full"
                     style={{
-                      width: `${Math.min(pct, 100)}%`,
-                      backgroundColor: s.color,
-                      opacity: pct === 0 ? 0.15 : 1,
+                      width: `${Math.min(intensitaetPct, 100)}%`,
+                      backgroundColor: INTENSITAET_COLOR,
+                      opacity: intensitaetPct === 0 ? 0.15 : 1,
                     }}
                   />
                 </div>
                 <span
                   className="text-[11px] font-semibold tabular-nums w-[32px] text-right"
-                  style={{ color: pct > 0 ? s.color : "hsl(var(--muted-foreground))" }}
+                  style={{ color: intensitaetPct > 0 ? INTENSITAET_COLOR : "hsl(var(--muted-foreground))" }}
                 >
-                  {Math.round(pct)}%
+                  {Math.round(intensitaetPct)}%
                 </span>
               </div>
             );
-          })}
+          })()}
+          
+          {/* Sub-Hebel der Intensitaet (eingerueckt) */}
+          <div className="ml-3 pl-2 border-l border-border/50 flex flex-col gap-1">
+            {SUBS.filter(s => s.isIntensitaet).map((s) => {
+              const pct = item[s.key];
+              return (
+                <div key={s.key} className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: s.color }}
+                  />
+                  <span className="text-[10px] text-muted-foreground w-[78px]">
+                    {s.label}
+                  </span>
+                  <div className="w-12 h-[4px] rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(pct, 100)}%`,
+                        backgroundColor: s.color,
+                        opacity: pct === 0 ? 0.15 : 1,
+                      }}
+                    />
+                  </div>
+                  <span
+                    className="text-[10px] font-medium tabular-nums w-[28px] text-right"
+                    style={{ color: pct > 0 ? s.color : "hsl(var(--muted-foreground))" }}
+                  >
+                    {Math.round(pct)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </TooltipContent>
     </Tooltip>

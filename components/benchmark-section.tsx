@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import type { AggregatedBenchmark, PatientenPhase } from "@/lib/benchmark-data";
+import React, { useState } from "react";
+import type { AggregatedBenchmark, PatientenPhase, SubBenchmark } from "@/lib/benchmark-data";
 import {
   Activity,
   Repeat2,
@@ -10,15 +10,8 @@ import {
   TrendingDown,
   TrendingUp,
   ArrowRight,
+  Layers,
 } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -35,30 +28,45 @@ const fmtDe = (n: number, dec = 2) =>
 const fmtPct = (n: number) => `${Math.round(n)}%`;
 const fmtInt = (n: number) => Math.round(n).toLocaleString("de-DE");
 
-const SUB_META = {
+// 2 Haupthebel
+const HAUPT_META = {
   indikation: {
     color: "#5b8ab5",
     bgLight: "rgba(91,138,181,0.08)",
     icon: Activity,
     label: "Indikation",
-    desc: "Wird der Parameter bei zu vielen Patienten angefordert?",
+    desc: "Anteil der Falle mit initialer Laboranforderung",
     longDesc:
       "Vergleich der Indikationsquote: In wie viel Prozent der Falle wird der Parameter initial angefordert? Ein hoherer Wert als der Benchmark kann darauf hindeuten, dass der Parameter bei zu vielen Patienten routinemassig bestellt wird.",
     unit: "%",
   },
+  intensitaet: {
+    color: "#cf8a3e",
+    bgLight: "rgba(207,138,62,0.08)",
+    icon: Layers,
+    label: "Intensitat",
+    desc: "Anforderungen pro indiziertem Fall",
+    longDesc:
+      "Die Intensitat beschreibt, wie viele Anforderungen pro indiziertem Fall erfolgen. Dieser Hebel setzt sich zusammen aus der Monitorfallrate (wie viele Falle ins Monitoring gehen), der Frequenz (wie haufig nachbestellt wird) und der Monitorzeit (wie lange das Monitoring dauert).",
+    unit: "A/F",
+  },
+} as const;
+
+// Sub-Hebel der Intensitat - Orange/Gelb/Braun Palette
+const INTENSITAET_SUB_META = {
   multiCaseRate: {
-    color: "#cb7b5a",
-    bgLight: "rgba(203,123,90,0.08)",
+    color: "#d97706", // amber-600
+    bgLight: "rgba(217,119,6,0.08)",
     icon: Repeat2,
-    label: "MultiCaseRate",
+    label: "Monitorfallrate",
     desc: "Gehen zu viele Falle ins Monitoring?",
     longDesc:
       "Vergleich der MultiCaseRate: Welcher Anteil der Falle mit Erstanforderung wird wiederholt untersucht (Monitoring)? Ein hoherer Wert bedeutet, dass mehr Patienten als notig ins Monitoring gehen.",
     unit: "%",
   },
   frequenz: {
-    color: "#4da8a0",
-    bgLight: "rgba(77,168,160,0.08)",
+    color: "#ca8a04", // yellow-600
+    bgLight: "rgba(202,138,4,0.08)",
     icon: Clock,
     label: "Frequenz",
     desc: "Wird der Parameter zu haufig nachbestellt?",
@@ -67,8 +75,8 @@ const SUB_META = {
     unit: "Tage",
   },
   monitorZeit: {
-    color: "#c07a8e",
-    bgLight: "rgba(192,122,142,0.08)",
+    color: "#92400e", // amber-800 (braun)
+    bgLight: "rgba(146,64,14,0.08)",
     icon: Timer,
     label: "Monitorzeit",
     desc: "Dauert das Monitoring zu lange?",
@@ -78,30 +86,23 @@ const SUB_META = {
   },
 } as const;
 
-type SubKey = keyof typeof SUB_META;
-const SUB_KEYS: SubKey[] = [
-  "indikation",
-  "multiCaseRate",
-  "frequenz",
-  "monitorZeit",
-];
+type HauptKey = keyof typeof HAUPT_META;
+type IntensitaetSubKey = keyof typeof INTENSITAET_SUB_META;
+const HAUPT_KEYS: HauptKey[] = ["indikation", "intensitaet"];
+const INTENSITAET_SUB_KEYS: IntensitaetSubKey[] = ["multiCaseRate", "frequenz", "monitorZeit"];
+
+const PHASE_COLORS = ["#4a7fad", "#5b8ab5", "#8bb0d0"]; // Aufnahme (dark), Verlauf (mid), Entlass (light)
 
 interface Props {
   benchmark: AggregatedBenchmark;
   title: string;
 }
 
-const ORG_COLORS = ["#2d8a6e", "#5ab896", "#a3d9c4"];
-const PHASE_COLORS = ["#4a7fad", "#5b8ab5", "#8bb0d0"]; // Aufnahme (dark), Verlauf (mid), Entlass (light)
+
 
 export default function BenchmarkSection({ benchmark, title }: Props) {
-  const [openSub, setOpenSub] = useState<SubKey | null>(null);
-
-  // Key for donut animation: changes whenever data changes, triggering re-mount
-  const donutKey = useMemo(
-    () => benchmark.orgUnits.map((o) => `${o.name}:${Math.round(o.euro)}`).join("|"),
-    [benchmark.orgUnits],
-  );
+  const [activeHaupt, setActiveHaupt] = useState<HauptKey | null>(null);
+  const [activeSubHebel, setActiveSubHebel] = useState<IntensitaetSubKey | null>(null);
 
   const diff =
     benchmark.analysen_pro_fall_kunde - benchmark.analysen_pro_fall_benchmark;
@@ -144,18 +145,18 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 {fmtPct(Math.abs(diffPct))}
               </span>
             </div>
-            <div className="mt-2 space-y-0.5 text-[11px]">
-              <div className="flex items-center justify-between gap-4 tabular-nums">
-                <span className="text-muted-foreground/70">Einsparung</span>
-                <span className="text-muted-foreground">
-                  {fmtInt(Math.round(benchmark.hauptpot_brut_euro))} EUR
-                </span>
+            <div className="mt-1.5 space-y-0 text-[10px] tabular-nums">
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground/70">Brutto</span>
+                <span className="text-muted-foreground">{fmtInt(Math.round(benchmark.hauptpot_brut_euro))} EUR</span>
               </div>
-              <div className="flex items-center justify-between gap-4 tabular-nums">
+              <div className="flex justify-between gap-3">
                 <span className="text-red-400/60">Erlosverluste</span>
-                <span className="text-red-400/80">
-                  -{fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR
-                </span>
+                <span className="text-red-400/80">-{fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-primary/70">Analysen</span>
+                <span className="text-primary">{fmtInt(benchmark.hauptpot_net_analysen)} ({benchmark.total_analysen > 0 ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100) : "0%"})</span>
               </div>
             </div>
           </div>
@@ -163,142 +164,290 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           {/* ── Divider ────────────────────────────────────── */}
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
-          {/* ── CENTER: 4 clickable sub-benchmark tiles ───── */}
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
-              Potenzial-Hebel
-            </p>
-            <div className="grid grid-cols-4 gap-2">
-              {SUB_KEYS.map((key) => {
-                const sub = benchmark[key];
-                const meta = SUB_META[key];
-                const Icon = meta.icon;
-                return (
-                  <Tooltip key={key}>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={() => setOpenSub(key)}
-                        className="group relative rounded-xl border bg-card px-3 py-2.5 text-left transition-all hover:shadow-md hover:border-foreground/20 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        {/* Colored top accent line */}
-                        <div
-                          className="absolute top-0 left-3 right-3 h-[2px] rounded-full"
-                          style={{ backgroundColor: meta.color }}
-                        />
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Icon
-                            className="h-3 w-3 flex-shrink-0"
-                            style={{ color: meta.color }}
-                          />
-                          <span className="text-[10px] text-muted-foreground truncate">
-                            {meta.label}
-                          </span>
-                        </div>
-                        <div className="flex items-baseline gap-1">
-                          <span
-                            className="text-lg font-bold leading-none tabular-nums"
-                            style={{ color: meta.color }}
-                          >
-                            {fmtPct(sub.pct)}
-                          </span>
-                        </div>
-                        {/* Mini progress bar */}
-                        <div className="mt-1.5 h-1 rounded-full bg-secondary overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${Math.min(sub.pct, 100)}%`,
-                              backgroundColor: meta.color,
-                            }}
-                          />
-                        </div>
-                        {/* Phase mini bar (only for Indikation) */}
-                        {key === "indikation" && (
-                          <div className="mt-1.5 flex items-center gap-px">
-                            {benchmark.indikation.phasen.map((ph, i) => (
-                              <div
-                                key={ph.name}
-                                className="h-[5px] transition-all duration-500 first:rounded-l-full last:rounded-r-full"
-                                style={{
-                                  width: `${ph.pct}%`,
-                                  backgroundColor: PHASE_COLORS[i],
-                                }}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="bottom"
-                      className="bg-card text-foreground border shadow-lg p-3 max-w-[200px]"
-                    >
-                      <p className="text-xs text-muted-foreground mb-1">
-                        {meta.desc}
-                      </p>
-                      <p className="text-xs font-semibold">
-                        {fmtInt(sub.analysen)} einsparbare Analysen
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        Klicken fur Details
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ── Divider ────────────────────────────────────── */}
-          <div className="hidden lg:block w-px self-stretch bg-border" />
-
-          {/* ── RIGHT: Analysen/Fall comparison + stats ───── */}
+          {/* ── CENTER: Potenzial-Hebel (2 Haupt + 3 Sub unter Intensitat) ───── */}
           <div className="flex-shrink-0">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
-              Analysen pro Fall
-            </p>
-            <div className="flex items-start gap-4">
-              {/* Grid table: rows = Analysen, Falle, A/F | cols = label, Kunde, Benchmark */}
-              <div className="grid grid-cols-[auto_auto_auto] gap-x-4 gap-y-0.5 items-baseline">
-                {/* Header row */}
-                <div />
-                <span className="text-[10px] text-muted-foreground text-right">Kunde</span>
-                <span className="text-[10px] text-muted-foreground text-right">Benchmark</span>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+                Potenzial-Hebel
+              </p>
+            </div>
+            
+            {/* Stacked Bar: Indikation + Intensitaet (mit Sub-Hebeln) */}
+            {(() => {
+              // Berechne relative Anteile basierend auf Potenzial-Analysen
+              const indPot = benchmark.indikation.analysen;
+              const intPot = benchmark.intensitaet.analysen;
+              const totalPot = indPot + intPot;
+              const indPct = totalPot > 0 ? (indPot / totalPot) * 100 : 50;
+              const intPct = totalPot > 0 ? (intPot / totalPot) * 100 : 50;
+              
+              // Sub-Hebel Anteile innerhalb Intensitaet
+              const subTotal = benchmark.intensitaet.subHebel.multiCaseRate.analysen + 
+                               benchmark.intensitaet.subHebel.frequenz.analysen + 
+                               benchmark.intensitaet.subHebel.monitorZeit.analysen;
+              const multiPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.multiCaseRate.analysen / subTotal) * intPct : intPct / 3;
+              const freqPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.frequenz.analysen / subTotal) * intPct : intPct / 3;
+              const monPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.monitorZeit.analysen / subTotal) * intPct : intPct / 3;
+              
+              return (
+                <div className="mb-3">
+                  <div className="flex h-2.5 rounded-full overflow-hidden bg-secondary/40">
+                    {/* Indikation */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="h-full transition-all cursor-pointer hover:opacity-80"
+                          style={{ width: `${indPct}%`, backgroundColor: HAUPT_META.indikation.color }}
+                          onClick={() => {
+                            setActiveHaupt(activeHaupt === "indikation" ? null : "indikation");
+                            setActiveSubHebel(null);
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-[10px]">
+                        <span style={{ color: HAUPT_META.indikation.color }}>Indikation</span>: {Math.round(indPct)}%
+                      </TooltipContent>
+                    </Tooltip>
+                    {/* Intensitaet aufgeteilt in 3 Sub-Hebel */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="h-full transition-all cursor-pointer hover:opacity-80"
+                          style={{ width: `${multiPct}%`, backgroundColor: INTENSITAET_SUB_META.multiCaseRate.color }}
+                          onClick={() => {
+                            setActiveHaupt("intensitaet");
+                            setActiveSubHebel(activeSubHebel === "multiCaseRate" ? null : "multiCaseRate");
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-[10px]">
+                        <span style={{ color: INTENSITAET_SUB_META.multiCaseRate.color }}>Monitorfallrate</span>: {Math.round(multiPct)}%
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="h-full transition-all cursor-pointer hover:opacity-80"
+                          style={{ width: `${freqPct}%`, backgroundColor: INTENSITAET_SUB_META.frequenz.color }}
+                          onClick={() => {
+                            setActiveHaupt("intensitaet");
+                            setActiveSubHebel(activeSubHebel === "frequenz" ? null : "frequenz");
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-[10px]">
+                        <span style={{ color: INTENSITAET_SUB_META.frequenz.color }}>Frequenz</span>: {Math.round(freqPct)}%
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div 
+                          className="h-full transition-all cursor-pointer hover:opacity-80"
+                          style={{ width: `${monPct}%`, backgroundColor: INTENSITAET_SUB_META.monitorZeit.color }}
+                          onClick={() => {
+                            setActiveHaupt("intensitaet");
+                            setActiveSubHebel(activeSubHebel === "monitorZeit" ? null : "monitorZeit");
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="text-[10px]">
+                        <span style={{ color: INTENSITAET_SUB_META.monitorZeit.color }}>Monitorzeit</span>: {Math.round(monPct)}%
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  {/* Legende */}
+                  <div className="flex justify-between mt-1 text-[9px] text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: HAUPT_META.indikation.color }} />
+                      <span>Indikation</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground/60">Intensitat:</span>
+                      <div className="flex items-center gap-0.5">
+                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: INTENSITAET_SUB_META.multiCaseRate.color }} />
+                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: INTENSITAET_SUB_META.frequenz.color }} />
+                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: INTENSITAET_SUB_META.monitorZeit.color }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+            
+            <div className="flex gap-3">
+              {/* Indikation tile */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveHaupt(activeHaupt === "indikation" ? null : "indikation");
+                      setActiveSubHebel(null);
+                    }}
+                    className={`group relative rounded-xl border px-4 py-3 text-left transition-all cursor-pointer focus:outline-none min-w-[120px] ${
+                      activeHaupt === "indikation" 
+                        ? "ring-2 ring-offset-2 shadow-md" 
+                        : "bg-card hover:shadow-md"
+                    }`}
+                    style={{
+                      borderColor: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined,
+                      backgroundColor: activeHaupt === "indikation" ? `${HAUPT_META.indikation.color}12` : undefined,
+                      // @ts-expect-error CSS custom property
+                      "--tw-ring-color": HAUPT_META.indikation.color,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (activeHaupt !== "indikation") {
+                        e.currentTarget.style.backgroundColor = `${HAUPT_META.indikation.color}08`;
+                        e.currentTarget.style.borderColor = `${HAUPT_META.indikation.color}50`;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (activeHaupt !== "indikation") {
+                        e.currentTarget.style.backgroundColor = "";
+                        e.currentTarget.style.borderColor = "";
+                      }
+                    }}
+                  >
+                    <div className="absolute top-0 left-3 right-3 h-[2px] rounded-full" style={{ backgroundColor: HAUPT_META.indikation.color }} />
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Activity className="h-3.5 w-3.5 flex-shrink-0" style={{ color: HAUPT_META.indikation.color }} />
+                      <span className={`text-[11px] ${activeHaupt === "indikation" ? "text-foreground font-medium" : "text-muted-foreground"}`}>Indikation</span>
+                    </div>
+                    <span className="text-xl font-bold tabular-nums" style={{ color: HAUPT_META.indikation.color }}>
+                      {fmtPct(benchmark.indikation.pct)}
+                    </span>
+                    <div className="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(benchmark.indikation.pct, 100)}%`, backgroundColor: HAUPT_META.indikation.color }} />
+                    </div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="bg-card text-foreground border shadow-lg p-2.5 max-w-[200px]">
+                  <p className="text-xs text-muted-foreground">{HAUPT_META.indikation.desc}</p>
+                </TooltipContent>
+              </Tooltip>
 
-                {/* Analysen */}
-                <span className="text-[10px] text-muted-foreground">Analysen</span>
-                <span className="text-[11px] tabular-nums text-foreground text-right">{fmtInt(benchmark.total_analysen)}</span>
-                <span className="text-[11px] tabular-nums text-primary/70 text-right">{fmtInt(Math.round(benchmark.benchmark_analysen))}</span>
+              {/* Intensitat group (Haupthebel + 3 Sub-Hebel rechts daneben) */}
+              <div className="flex items-stretch gap-1.5">
+                {/* Intensitat main tile */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Wenn Sub-Hebel aktiv: Sub-Hebel deaktivieren, Intensitaet bleibt aktiv
+                        if (activeSubHebel) {
+                          setActiveSubHebel(null);
+                        } else if (activeHaupt === "intensitaet") {
+                          // Wenn nur Intensitaet aktiv (ohne Sub-Hebel): alles deaktivieren
+                          setActiveHaupt(null);
+                        } else {
+                          // Wenn nichts oder Indikation aktiv: Intensitaet aktivieren
+                          setActiveHaupt("intensitaet");
+                          setActiveSubHebel(null);
+                        }
+                      }}
+                      className={`group relative rounded-xl border px-4 py-3 text-left transition-all cursor-pointer focus:outline-none min-w-[120px] ${
+                        activeHaupt === "intensitaet" && !activeSubHebel
+                          ? "ring-2 ring-offset-2 shadow-md" 
+                          : "bg-card hover:shadow-md"
+                      }`}
+                      style={{
+                        borderColor: activeHaupt === "intensitaet" && !activeSubHebel ? HAUPT_META.intensitaet.color : undefined,
+                        backgroundColor: activeHaupt === "intensitaet" && !activeSubHebel ? `${HAUPT_META.intensitaet.color}12` : undefined,
+                        // @ts-expect-error CSS custom property
+                        "--tw-ring-color": HAUPT_META.intensitaet.color,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!(activeHaupt === "intensitaet" && !activeSubHebel)) {
+                          e.currentTarget.style.backgroundColor = `${HAUPT_META.intensitaet.color}08`;
+                          e.currentTarget.style.borderColor = `${HAUPT_META.intensitaet.color}50`;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!(activeHaupt === "intensitaet" && !activeSubHebel)) {
+                          e.currentTarget.style.backgroundColor = "";
+                          e.currentTarget.style.borderColor = "";
+                        }
+                      }}
+                    >
+                      <div className="absolute top-0 left-3 right-3 h-[2px] rounded-full" style={{ backgroundColor: HAUPT_META.intensitaet.color }} />
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <Layers className="h-3.5 w-3.5 flex-shrink-0" style={{ color: HAUPT_META.intensitaet.color }} />
+                        <span className={`text-[11px] ${activeHaupt === "intensitaet" && !activeSubHebel ? "text-foreground font-medium" : "text-muted-foreground"}`}>Intensitat</span>
+                      </div>
+                      <span className="text-xl font-bold tabular-nums" style={{ color: HAUPT_META.intensitaet.color }}>
+                        {fmtPct(benchmark.intensitaet.pct)}
+                      </span>
+                      <div className="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${Math.min(benchmark.intensitaet.pct, 100)}%`, backgroundColor: HAUPT_META.intensitaet.color }} />
+                      </div>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="bg-card text-foreground border shadow-lg p-2.5 max-w-[200px]">
+                    <p className="text-xs text-muted-foreground">{HAUPT_META.intensitaet.desc}</p>
+                  </TooltipContent>
+                </Tooltip>
 
-                {/* Falle */}
-                <span className="text-[10px] text-muted-foreground">Falle</span>
-                <span className="text-[11px] tabular-nums text-foreground text-right">{fmtInt(benchmark.total_faelle)}</span>
-                <span className="text-[11px] tabular-nums text-primary/70 text-right">{fmtInt(benchmark.total_faelle)}</span>
-
-                {/* Divider spanning all cols */}
-                <div className="col-span-3 border-t border-border my-0.5" />
-
-                {/* A/F big row */}
-                <span className="text-[10px] font-medium text-muted-foreground">A / F</span>
-                <span className="text-base font-bold tabular-nums text-foreground text-right">{fmtDe(benchmark.analysen_pro_fall_kunde)}</span>
-                <span className="text-base font-bold tabular-nums text-primary text-right">{fmtDe(benchmark.analysen_pro_fall_benchmark)}</span>
-              </div>
-
-              {/* Divider */}
-              <div className="h-14 w-px bg-border flex-shrink-0 mt-3" />
-
-              {/* Einsparung */}
-              <div className="mt-3">
-                <p className="text-[10px] text-muted-foreground">Einsparung</p>
-                <p className="text-sm font-bold text-primary tabular-nums leading-tight mt-0.5">
-                  {fmtInt(benchmark.hauptpot_net_analysen)} Analysen
-                </p>
-                <p className="text-[10px] text-muted-foreground tabular-nums mt-0.5">
-                  {benchmark.total_analysen > 0
-                    ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100)
-                    : "0%"} der Gesamtanalysen
-                </p>
+                {/* 3 Sub-Hebel (stacked vertically, right of Intensitat) */}
+                <div className="flex flex-col justify-center gap-1">
+                  {INTENSITAET_SUB_KEYS.map((subKey) => {
+                    const subHebel = benchmark.intensitaet.subHebel[subKey];
+                    const subMeta = INTENSITAET_SUB_META[subKey];
+                    const SubIcon = subMeta.icon;
+                    const isActive = activeSubHebel === subKey;
+                    return (
+                      <Tooltip key={subKey}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveHaupt("intensitaet");
+                              setActiveSubHebel(isActive ? null : subKey);
+                            }}
+                            className={`flex flex-col gap-0.5 px-2 py-1.5 rounded-lg border text-[10px] transition-all cursor-pointer min-w-[100px] ${
+                              isActive 
+                                ? "ring-1 ring-offset-1" 
+                                : "bg-card text-muted-foreground"
+                            }`}
+                            style={{
+                              backgroundColor: isActive ? `${subMeta.color}20` : undefined,
+                              borderColor: isActive ? subMeta.color : undefined,
+                              // @ts-expect-error CSS custom property
+                              "--tw-ring-color": subMeta.color,
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isActive) {
+                                e.currentTarget.style.backgroundColor = `${subMeta.color}15`;
+                                e.currentTarget.style.borderColor = `${subMeta.color}60`;
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isActive) {
+                                e.currentTarget.style.backgroundColor = "";
+                                e.currentTarget.style.borderColor = "";
+                              }
+                            }}
+                          >
+                            <div className="flex items-center justify-between gap-1.5 w-full">
+                              <div className="flex items-center gap-1">
+                                <SubIcon className="h-3 w-3 flex-shrink-0" style={{ color: subMeta.color }} />
+                                <span className={`text-[9px] truncate ${isActive ? "font-medium" : ""}`} style={{ color: isActive ? subMeta.color : undefined }}>{subMeta.label}</span>
+                              </div>
+                              <span className="font-semibold tabular-nums" style={{ color: subMeta.color }}>{Math.round(subHebel.pct)}%</span>
+                            </div>
+                            <div className="h-1 rounded-full bg-secondary/60 overflow-hidden w-full">
+                              <div className="h-full rounded-full" style={{ width: `${Math.min(subHebel.pct, 100)}%`, backgroundColor: subMeta.color }} />
+                            </div>
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="bg-card text-foreground border shadow-lg p-2 max-w-[180px]">
+                          <p className="text-[11px] font-medium mb-0.5" style={{ color: subMeta.color }}>{subMeta.label}</p>
+                          <p className="text-[10px] text-muted-foreground">{subMeta.desc}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -306,308 +455,234 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
           {/* ── Divider ────────────────────────────────────── */}
           <div className="hidden lg:block w-px self-stretch bg-border" />
 
-          {/* ── FAR RIGHT: Org Unit Donut ──────────────────── */}
-          <div className="flex-shrink-0 w-fit">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
-              Organisationseinheit
-            </p>
-            <div className="flex items-center gap-3">
-              {/* Donut */}
-              <div className="h-[85px] w-[85px] flex-shrink-0" key={donutKey}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={benchmark.orgUnits}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={24}
-                      outerRadius={38}
-                      paddingAngle={3}
-                      dataKey="pct"
-                      nameKey="name"
-                      stroke="none"
-                      animationBegin={0}
-                      animationDuration={600}
-                      animationEasing="ease-out"
-                    >
-                      {benchmark.orgUnits.map((_, i) => (
-                        <Cell key={i} fill={ORG_COLORS[i % ORG_COLORS.length]} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
+          {/* ── RIGHT: Context-sensitive explanation area + Kennzahlen ───── */}
+          <div className="flex-1 flex gap-4 min-w-0">
+            {/* Erklaerungsbereich */}
+            <div className="flex-1 min-w-0">
+            {/* Default: Analysen pro Fall */}
+            {!activeHaupt && (
+              <div className="rounded-lg border-l-[3px] border-border/50 bg-muted/30 p-3 transition-all">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+                    Analysen pro Fall
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 mb-1.5">
+                  <span className="text-base font-bold tabular-nums text-foreground">{fmtDe(benchmark.analysen_pro_fall_kunde)}</span>
+                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-base font-bold tabular-nums text-primary">{fmtDe(benchmark.analysen_pro_fall_benchmark)}</span>
+                  <span className="text-[10px] text-muted-foreground">(Benchmark)</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Dieser Wert zeigt, wie viele Laboranalysen pro stationarem Fall durchgefuhrt werden. Er setzt sich zusammen aus der <span className="font-medium text-foreground">Indikation</span> (bei wie vielen Fallen wird uberhaupt Labor angefordert) und der <span className="font-medium text-foreground">Intensitat</span> (wie viele Anforderungen pro indiziertem Fall). Klicken Sie auf einen Hebel, um Details zu sehen.
+                </p>
               </div>
-              {/* Legend beside donut - grid for alignment */}
-              <div className="grid grid-cols-[auto_1fr_auto] gap-x-2 gap-y-1.5 items-center whitespace-nowrap">
-                {benchmark.orgUnits.map((ou, i) => (
-                  <React.Fragment key={ou.name}>
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className="h-2 w-2 rounded-sm flex-shrink-0"
-                        style={{ backgroundColor: ORG_COLORS[i] }}
-                      />
-                      <span className="text-[11px] text-muted-foreground">{ou.name}</span>
+            )}
+
+            {/* Indikation selected */}
+            {activeHaupt === "indikation" && (
+              <div 
+                className="rounded-lg border-l-[3px] p-3 transition-all"
+                style={{ 
+                  borderLeftColor: HAUPT_META.indikation.color,
+                  backgroundColor: `${HAUPT_META.indikation.color}08`,
+                }}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Activity className="h-4 w-4" style={{ color: HAUPT_META.indikation.color }} />
+                  <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: HAUPT_META.indikation.color }}>
+                    Indikation
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 mb-1.5">
+                  <span className="text-base font-bold tabular-nums" style={{ color: benchmark.indikation.kunde > benchmark.indikation.benchmark ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
+                    {fmtDe(benchmark.indikation.kunde)}%
+                  </span>
+                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-base font-bold tabular-nums text-primary">{fmtDe(benchmark.indikation.benchmark)}%</span>
+                  <span className="text-[10px] text-muted-foreground">(Benchmark)</span>
+                  <span className="text-[10px] font-medium tabular-nums ml-auto" style={{ color: HAUPT_META.indikation.color }}>
+                    {fmtInt(benchmark.indikation.analysen)} Analysen ({fmtPct(benchmark.indikation.pct)})
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {HAUPT_META.indikation.longDesc}
+                </p>
+              </div>
+            )}
+
+            {/* Intensitat selected (no sub-hebel active) */}
+            {activeHaupt === "intensitaet" && !activeSubHebel && (
+              <div 
+                className="rounded-lg border-l-[3px] p-3 transition-all"
+                style={{ 
+                  borderLeftColor: HAUPT_META.intensitaet.color,
+                  backgroundColor: `${HAUPT_META.intensitaet.color}08`,
+                }}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Layers className="h-4 w-4" style={{ color: HAUPT_META.intensitaet.color }} />
+                  <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: HAUPT_META.intensitaet.color }}>
+                    Intensitat
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 mb-1.5">
+                  <span className="text-base font-bold tabular-nums" style={{ color: benchmark.intensitaet.kunde > benchmark.intensitaet.benchmark ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
+                    {fmtDe(benchmark.intensitaet.kunde)}
+                  </span>
+                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-base font-bold tabular-nums text-primary">{fmtDe(benchmark.intensitaet.benchmark)}</span>
+                  <span className="text-[10px] text-muted-foreground">(Benchmark)</span>
+                  <span className="text-[10px] font-medium tabular-nums ml-auto" style={{ color: HAUPT_META.intensitaet.color }}>
+                    {fmtInt(benchmark.intensitaet.analysen)} Analysen ({fmtPct(benchmark.intensitaet.pct)})
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {HAUPT_META.intensitaet.longDesc}
+                </p>
+              </div>
+            )}
+
+            {/* Sub-Hebel selected */}
+            {activeSubHebel && (
+              <div 
+                className="rounded-lg border-l-[3px] p-3 transition-all"
+                style={{ 
+                  borderLeftColor: INTENSITAET_SUB_META[activeSubHebel].color,
+                  backgroundColor: `${INTENSITAET_SUB_META[activeSubHebel].color}08`,
+                }}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  {React.createElement(INTENSITAET_SUB_META[activeSubHebel].icon, {
+                    className: "h-4 w-4",
+                    style: { color: INTENSITAET_SUB_META[activeSubHebel].color }
+                  })}
+                  <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: INTENSITAET_SUB_META[activeSubHebel].color }}>
+                    {INTENSITAET_SUB_META[activeSubHebel].label}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 mb-1.5">
+                  <span className="text-base font-bold tabular-nums" style={{ color: INTENSITAET_SUB_META[activeSubHebel].color }}>
+                    {fmtDe(benchmark.intensitaet.subHebel[activeSubHebel].kunde)} {INTENSITAET_SUB_META[activeSubHebel].unit}
+                  </span>
+                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-base font-bold tabular-nums text-primary">
+                    {fmtDe(benchmark.intensitaet.subHebel[activeSubHebel].benchmark)} {INTENSITAET_SUB_META[activeSubHebel].unit}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">(Benchmark)</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  {INTENSITAET_SUB_META[activeSubHebel].longDesc}
+                </p>
+              </div>
+            )}
+            </div>
+
+            {/* Kennzahlen rechts daneben - Fälle/Analysen oben, Benchmark unten */}
+            <div className="flex-shrink-0 border-l border-border/40 pl-4 flex flex-col">
+              {/* Fälle + Analysen nebeneinander */}
+              <div className="flex gap-4">
+                {/* Fälle Spalte */}
+                <div className="min-w-[90px]">
+                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">Falle</p>
+                  <div className="space-y-0.5 text-[10px] tabular-nums">
+                    {/* Gesamt - highlight bei Indikation */}
+                    <div 
+                      className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
+                      style={{ backgroundColor: activeHaupt === "indikation" ? `${HAUPT_META.indikation.color}15` : "transparent" }}
+                    >
+                      <span className={activeHaupt === "indikation" ? "font-medium" : "text-muted-foreground"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>Gesamt</span>
+                      <span className={activeHaupt === "indikation" ? "font-semibold" : "text-foreground font-medium"} style={{ color: activeHaupt === "indikation" ? HAUPT_META.indikation.color : undefined }}>{fmtInt(benchmark.total_faelle)}</span>
                     </div>
-                    <div />
-                    <span className="text-[11px] tabular-nums text-right">
-                      <span className="font-semibold text-foreground">{fmtInt(Math.round(ou.euro))} EUR</span>
-                      <span className="text-muted-foreground font-normal ml-1">({Math.round(ou.pct)}%)</span>
-                    </span>
-                  </React.Fragment>
-                ))}
+                    {/* mit Labor - highlight bei Indikation, Intensität (ohne Sub), oder Monitorfallrate (multiCaseRate) */}
+                    {(() => {
+                      const highlightMitLabor = activeHaupt === "indikation" || (activeHaupt === "intensitaet" && !activeSubHebel) || activeSubHebel === "multiCaseRate";
+                      const mitLaborColor = activeHaupt === "indikation" 
+                        ? HAUPT_META.indikation.color 
+                        : activeSubHebel === "multiCaseRate" 
+                          ? INTENSITAET_SUB_META.multiCaseRate.color 
+                          : HAUPT_META.intensitaet.color;
+                      return (
+                        <div 
+                          className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
+                          style={{ backgroundColor: highlightMitLabor ? `${mitLaborColor}15` : "transparent" }}
+                        >
+                          <span 
+                            className={highlightMitLabor ? "font-medium" : "text-muted-foreground"} 
+                            style={{ color: highlightMitLabor ? mitLaborColor : undefined }}
+                          >mit Labor</span>
+                          <span 
+                            className={highlightMitLabor ? "font-semibold" : "text-foreground font-medium"} 
+                            style={{ color: highlightMitLabor ? mitLaborColor : undefined }}
+                          >{fmtInt(benchmark.faelle_mit_labor)}</span>
+                        </div>
+                      );
+                    })()}
+                    {/* Mehrfach - highlight bei allen Sub-Hebeln */}
+                    <div 
+                      className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
+                      style={{ backgroundColor: activeSubHebel ? `${INTENSITAET_SUB_META[activeSubHebel].color}15` : "transparent" }}
+                    >
+                      <span className={activeSubHebel ? "font-medium" : "text-muted-foreground"} style={{ color: activeSubHebel ? INTENSITAET_SUB_META[activeSubHebel].color : undefined }}>Mehrfach</span>
+                      <span className={activeSubHebel ? "font-semibold" : "text-foreground font-medium"} style={{ color: activeSubHebel ? INTENSITAET_SUB_META[activeSubHebel].color : undefined }}>{fmtInt(benchmark.faelle_mit_mehrfach)}</span>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <span className="text-muted-foreground">Einzel</span>
+                      <span className="text-foreground font-medium">{fmtInt(benchmark.faelle_mit_einzel)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Analysen Spalte */}
+                <div className="min-w-[90px]">
+                  <p className="text-[9px] uppercase tracking-wider text-muted-foreground/70 font-medium mb-1">Analysen</p>
+                  <div className="space-y-0.5 text-[10px] tabular-nums">
+                    {/* Platzhalter für Alignment mit Fälle Gesamt */}
+                    <div className="flex justify-between gap-2 invisible"><span>-</span><span>-</span></div>
+                    {/* Gesamt - auf Höhe von "mit Labor", highlight bei Intensität (ohne Sub) */}
+                    <div 
+                      className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
+                      style={{ backgroundColor: (activeHaupt === "intensitaet" && !activeSubHebel) ? `${HAUPT_META.intensitaet.color}15` : "transparent" }}
+                    >
+                      <span className={(activeHaupt === "intensitaet" && !activeSubHebel) ? "font-medium" : "text-muted-foreground"} style={{ color: (activeHaupt === "intensitaet" && !activeSubHebel) ? HAUPT_META.intensitaet.color : undefined }}>Gesamt</span>
+                      <span className={(activeHaupt === "intensitaet" && !activeSubHebel) ? "font-semibold" : "text-foreground font-medium"} style={{ color: (activeHaupt === "intensitaet" && !activeSubHebel) ? HAUPT_META.intensitaet.color : undefined }}>{fmtInt(benchmark.total_analysen)}</span>
+                    </div>
+                    {/* Mehrfach - highlight bei Frequenz oder Monitorzeit */}
+                    <div 
+                      className="flex justify-between gap-2 rounded px-1 -mx-1 transition-all"
+                      style={{ backgroundColor: (activeSubHebel === "frequenz" || activeSubHebel === "monitorZeit") ? `${INTENSITAET_SUB_META[activeSubHebel].color}15` : "transparent" }}
+                    >
+                      <span className={(activeSubHebel === "frequenz" || activeSubHebel === "monitorZeit") ? "font-medium" : "text-muted-foreground"} style={{ color: (activeSubHebel === "frequenz" || activeSubHebel === "monitorZeit") ? INTENSITAET_SUB_META[activeSubHebel].color : undefined }}>Mehrfach</span>
+                      <span className={(activeSubHebel === "frequenz" || activeSubHebel === "monitorZeit") ? "font-semibold" : "text-foreground font-medium"} style={{ color: (activeSubHebel === "frequenz" || activeSubHebel === "monitorZeit") ? INTENSITAET_SUB_META[activeSubHebel].color : undefined }}>{fmtInt(benchmark.analysen_aus_mehrfach)}</span>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <span className="text-muted-foreground">Einzel</span>
+                      <span className="text-foreground font-medium">{fmtInt(benchmark.analysen_aus_einzel)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Benchmark darunter */}
+              <div className="mt-2 pt-1.5 border-t border-border/30">
+                <p className="text-[9px] uppercase tracking-wider text-primary/70 font-medium mb-0.5">Benchmark</p>
+                <div className="flex gap-4 text-[10px] tabular-nums">
+                  <div className="flex gap-1.5">
+                    <span className="text-muted-foreground">Falle</span>
+                    <span className="text-primary font-medium">{fmtInt(benchmark.benchmark_faelle)}</span>
+                  </div>
+                  <div className="flex gap-1.5">
+                    <span className="text-muted-foreground">Projekte</span>
+                    <span className="text-primary font-medium">{benchmark.benchmark_projekte}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* ── Detail Dialog ──────────────────────────────────── */}
-      <Dialog
-        open={openSub !== null}
-        onOpenChange={(open) => {
-          if (!open) setOpenSub(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          {openSub && (
-            <SubBenchmarkDetail
-              subKey={openSub}
-              benchmark={benchmark}
-              onNavigate={(key) => setOpenSub(key)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </TooltipProvider>
   );
 }
 
-/* ── Sub-Benchmark Detail Dialog Content ─────────────────────────────── */
 
-function SubBenchmarkDetail({
-  subKey,
-  benchmark,
-  onNavigate,
-}: {
-  subKey: SubKey;
-  benchmark: AggregatedBenchmark;
-  onNavigate: (key: SubKey) => void;
-}) {
-  const meta = SUB_META[subKey];
-  const sub = benchmark[subKey];
-  const Icon = meta.icon;
-
-  const isWorse =
-    subKey === "frequenz" || subKey === "monitorZeit"
-      ? sub.kunde < sub.benchmark
-      : sub.kunde > sub.benchmark;
-
-  const maxVal = Math.max(sub.kunde, sub.benchmark, 0.01);
-
-  const currentIdx = SUB_KEYS.indexOf(subKey);
-  const prevKey = currentIdx > 0 ? SUB_KEYS[currentIdx - 1] : null;
-  const nextKey =
-    currentIdx < SUB_KEYS.length - 1 ? SUB_KEYS[currentIdx + 1] : null;
-
-  return (
-    <>
-      <DialogHeader>
-        <div className="flex items-center gap-3">
-          <div
-            className="p-2.5 rounded-xl"
-            style={{ backgroundColor: meta.bgLight }}
-          >
-            <Icon className="h-5 w-5" style={{ color: meta.color }} />
-          </div>
-          <div>
-            <DialogTitle className="text-lg">{meta.label}</DialogTitle>
-            <DialogDescription className="text-xs">
-              {meta.desc}
-            </DialogDescription>
-          </div>
-        </div>
-      </DialogHeader>
-
-      <p className="text-xs text-muted-foreground leading-relaxed -mt-1">
-        {meta.longDesc}
-      </p>
-
-      {/* Key numbers */}
-      <div className="grid grid-cols-2 gap-3">
-        <div
-          className="rounded-xl border p-3"
-          style={{ borderColor: `${meta.color}30` }}
-        >
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Anteil am Potenzial
-          </p>
-          <p className="text-2xl font-bold" style={{ color: meta.color }}>
-            {fmtPct(sub.pct)}
-          </p>
-        </div>
-        <div className="rounded-xl border p-3">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-            Einsparbare Analysen
-          </p>
-          <p className="text-2xl font-bold text-foreground">
-            {fmtInt(sub.analysen)}
-          </p>
-        </div>
-      </div>
-
-      {/* Kunde vs Benchmark bars */}
-      <div className="space-y-3">
-        <p className="text-xs font-semibold text-foreground">
-          Kunde vs. Benchmark
-        </p>
-
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Ihre Einrichtung</span>
-            <span
-              className="font-bold"
-              style={{
-                color: isWorse
-                  ? "hsl(var(--destructive))"
-                  : "hsl(var(--primary))",
-              }}
-            >
-              {fmtDe(sub.kunde)} {meta.unit}
-            </span>
-          </div>
-          <div className="h-3 rounded-full bg-secondary overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${(sub.kunde / maxVal) * 100}%`,
-                backgroundColor: isWorse
-                  ? "hsl(var(--destructive))"
-                  : meta.color,
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Benchmark</span>
-            <span className="font-bold text-foreground">
-              {fmtDe(sub.benchmark)} {meta.unit}
-            </span>
-          </div>
-          <div className="h-3 rounded-full bg-secondary overflow-hidden">
-            <div
-              className="h-full rounded-full bg-foreground/30 transition-all duration-500"
-              style={{
-                width: `${(sub.benchmark / maxVal) * 100}%`,
-              }}
-            />
-          </div>
-        </div>
-
-        <div
-          className={`rounded-lg p-2.5 text-xs ${
-            isWorse
-              ? "bg-destructive/5 text-destructive border border-destructive/15"
-              : "bg-primary/5 text-primary border border-primary/15"
-          }`}
-        >
-          {isWorse
-            ? `Ihr Wert liegt ${subKey === "frequenz" || subKey === "monitorZeit" ? "unter" : "uber"} dem Benchmark. Hier besteht Optimierungsbedarf.`
-            : "Ihr Wert liegt im oder unter dem Benchmark. Kein akuter Handlungsbedarf."}
-        </div>
-
-        {/* Patientenphase breakdown (only for Indikation) */}
-        {subKey === "indikation" && (
-          <div className="space-y-2.5">
-            <p className="text-xs font-semibold text-foreground">
-              Verteilung nach Patientenphase
-            </p>
-            {/* Stacked bar */}
-            <div className="flex h-3 w-full rounded-full overflow-hidden">
-              {benchmark.indikation.phasen.map((ph, i) => (
-                <div
-                  key={ph.name}
-                  className="h-full transition-all duration-500 border-r border-white/80 last:border-r-0"
-                  style={{
-                    width: `${ph.pct}%`,
-                    backgroundColor: PHASE_COLORS[i],
-                  }}
-                />
-              ))}
-            </div>
-            {/* Phase legend with values */}
-            <div className="space-y-1.5">
-              {benchmark.indikation.phasen.map((ph, i) => (
-                <div key={ph.name} className="flex items-center gap-2">
-                  <div
-                    className="h-2.5 w-2.5 rounded-sm flex-shrink-0"
-                    style={{ backgroundColor: PHASE_COLORS[i] }}
-                  />
-                  <span className="text-xs text-muted-foreground flex-1">{ph.name}</span>
-                  <span className="text-xs font-semibold text-foreground tabular-nums">
-                    {fmtInt(ph.analysen)} Analysen
-                  </span>
-                  <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">
-                    {Math.round(ph.pct)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Navigation between sub-benchmarks */}
-      <div className="flex items-center justify-between pt-1 border-t">
-        {prevKey ? (
-          <button
-            type="button"
-            onClick={() => onNavigate(prevKey)}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-          >
-            <div
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: SUB_META[prevKey].color }}
-            />
-            {SUB_META[prevKey].label}
-          </button>
-        ) : (
-          <div />
-        )}
-        <div className="flex gap-1">
-          {SUB_KEYS.map((k) => (
-            <button
-              type="button"
-              key={k}
-              onClick={() => onNavigate(k)}
-              className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                k === subKey ? "w-4" : "w-1.5"
-              }`}
-              style={{
-                backgroundColor:
-                  k === subKey ? SUB_META[k].color : "hsl(var(--border))",
-              }}
-              aria-label={SUB_META[k].label}
-            />
-          ))}
-        </div>
-        {nextKey ? (
-          <button
-            type="button"
-            onClick={() => onNavigate(nextKey)}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-          >
-            {SUB_META[nextKey].label}
-            <div
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: SUB_META[nextKey].color }}
-            />
-          </button>
-        ) : (
-          <div />
-        )}
-      </div>
-    </>
-  );
-}

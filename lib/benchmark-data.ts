@@ -43,6 +43,25 @@ export interface PatientenPhase {
   analysen: number;
 }
 
+export interface SubBenchmark {
+  analysen: number;
+  pct: number;
+  kunde: number;
+  benchmark: number;
+}
+
+export interface IntensitaetBenchmark extends SubBenchmark {
+  /** Anforderungen pro indiziertem Fall */
+  anforderungenProIndFall_kunde: number;
+  anforderungenProIndFall_benchmark: number;
+  /** Sub-components of Intensitaet */
+  subHebel: {
+    multiCaseRate: SubBenchmark;
+    frequenz: SubBenchmark;
+    monitorZeit: SubBenchmark;
+  };
+}
+
 export interface AggregatedBenchmark {
   analysen_pro_fall_kunde: number;
   analysen_pro_fall_benchmark: number;
@@ -56,11 +75,27 @@ export interface AggregatedBenchmark {
   total_faelle: number;
   /** Benchmark-side analysen (faelle * a/f benchmark) */
   benchmark_analysen: number;
-  // sub-benchmarks
+  /** Faelle mit mindestens einer Laboranforderung */
+  faelle_mit_labor: number;
+  /** Faelle mit Mehrfachanforderung (multifaelle) */
+  faelle_mit_mehrfach: number;
+  /** Faelle mit nur einer Anforderung */
+  faelle_mit_einzel: number;
+  /** Analysen aus Mehrfachfällen */
+  analysen_aus_mehrfach: number;
+  /** Analysen aus Einzelfällen */
+  analysen_aus_einzel: number;
+  /** Anzahl Faelle im Benchmark */
+  benchmark_faelle: number;
+  /** Anzahl Projekte/Einrichtungen im Benchmark */
+  benchmark_projekte: number;
+  // Main levers (2 Haupthebel)
   indikation: { analysen: number; pct: number; kunde: number; benchmark: number; phasen: PatientenPhase[] };
-  multiCaseRate: { analysen: number; pct: number; kunde: number; benchmark: number };
-  frequenz: { analysen: number; pct: number; kunde: number; benchmark: number };
-  monitorZeit: { analysen: number; pct: number; kunde: number; benchmark: number };
+  intensitaet: IntensitaetBenchmark;
+  // Legacy sub-benchmarks (still used for detail tables)
+  multiCaseRate: SubBenchmark;
+  frequenz: SubBenchmark;
+  monitorZeit: SubBenchmark;
   // org unit distribution
   orgUnits: OrgUnitShare[];
 }
@@ -276,6 +311,20 @@ export function aggregateBenchmark(
   const total_analysen = filtered.reduce((s, r) => s + r.analysen, 0);
   const total_faelle = filtered.reduce((s, r) => s + r.faelle_kunde, 0);
   const analysen_pro_fall_kunde = total_faelle > 0 ? total_analysen / total_faelle : 0;
+  
+  // Faelle mit Labor = alle Faelle die eine Anforderung haben
+  const faelle_mit_labor = filtered.reduce((s, r) => s + r.faelle_mit_anforderung_kunde, 0);
+  // Faelle mit Mehrfachanforderung
+  const faelle_mit_mehrfach = filtered.reduce((s, r) => s + r.multifaelle, 0);
+  // Faelle mit Einzelanforderung = faelle_mit_labor - faelle_mit_mehrfach
+  const faelle_mit_einzel = faelle_mit_labor - faelle_mit_mehrfach;
+  // Analysen aus Mehrfach- und Einzelfällen (simuliert basierend auf Verteilung)
+  // Mehrfachfälle haben im Schnitt ~3x mehr Analysen pro Fall
+  const analysen_aus_mehrfach = Math.round(total_analysen * 0.72); // ~72% der Analysen aus Mehrfachfällen
+  const analysen_aus_einzel = total_analysen - analysen_aus_mehrfach;
+  // Benchmark Metadaten (simuliert - normalerweise aus Backend)
+  const benchmark_faelle = Math.round(total_faelle * 12.5); // ~12.5x mehr Faelle im Benchmark
+  const benchmark_projekte = 47; // Anzahl Projekte im Benchmark
 
   // Weighted benchmark
   const weighted_benchmark_sum = filtered.reduce(
@@ -327,6 +376,13 @@ export function aggregateBenchmark(
     total_analysen,
     total_faelle,
     benchmark_analysen: total_faelle * analysen_pro_fall_benchmark,
+    faelle_mit_labor,
+    faelle_mit_mehrfach,
+    faelle_mit_einzel,
+    analysen_aus_mehrfach,
+    analysen_aus_einzel,
+    benchmark_faelle,
+    benchmark_projekte,
     indikation: {
       analysen: pot_indikation,
       pct: pot_total > 0 ? (pot_indikation / pot_total) * 100 : 0,
@@ -338,6 +394,36 @@ export function aggregateBenchmark(
         { name: "Entlass", pct: 20, analysen: Math.round(pot_indikation * 0.20) },
       ],
     },
+    // Intensitaet = MultiCaseRate + Frequenz + Monitorzeit combined
+    intensitaet: {
+      analysen: pot_multiCase + pot_frequenz + pot_span,
+      pct: pot_total > 0 ? ((pot_multiCase + pot_frequenz + pot_span) / pot_total) * 100 : 0,
+      kunde: avg((r) => r.analysen_pro_fall_kunde),
+      benchmark: avg((r) => r.analysen_pro_fall_benchmark),
+      anforderungenProIndFall_kunde: avg((r) => r.analysen_pro_fall_kunde),
+      anforderungenProIndFall_benchmark: avg((r) => r.analysen_pro_fall_benchmark),
+      subHebel: {
+        multiCaseRate: {
+          analysen: pot_multiCase,
+          pct: (pot_multiCase + pot_frequenz + pot_span) > 0 ? (pot_multiCase / (pot_multiCase + pot_frequenz + pot_span)) * 100 : 0,
+          kunde: avg((r) => r.multiCaseRate) * 100,
+          benchmark: avg((r) => r.multiCaseRate_benchmark) * 100,
+        },
+        frequenz: {
+          analysen: pot_frequenz,
+          pct: (pot_multiCase + pot_frequenz + pot_span) > 0 ? (pot_frequenz / (pot_multiCase + pot_frequenz + pot_span)) * 100 : 0,
+          kunde: avg((r) => r.frequenz_tage_kunde),
+          benchmark: avg((r) => r.frequenz_tage_benchmark),
+        },
+        monitorZeit: {
+          analysen: pot_span,
+          pct: (pot_multiCase + pot_frequenz + pot_span) > 0 ? (pot_span / (pot_multiCase + pot_frequenz + pot_span)) * 100 : 0,
+          kunde: avg((r) => r.span_kunde),
+          benchmark: avg((r) => r.span_benchmark),
+        },
+      },
+    },
+    // Legacy sub-benchmarks (still used for detail tables)
     multiCaseRate: {
       analysen: pot_multiCase,
       pct: pot_total > 0 ? (pot_multiCase / pot_total) * 100 : 0,
