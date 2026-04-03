@@ -372,23 +372,23 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
                     Anforderungen pro Fall
                   </p>
-                  {/* 4 Werte mit Labels - Grid mit festen Spalten */}
-                  <div className="grid grid-cols-[minmax(70px,1fr)_minmax(70px,1fr)_minmax(70px,1fr)_minmax(140px,1.5fr)] gap-4 mb-2">
-                    <div className="flex flex-col items-center">
+                  {/* 4 Werte mit Labels - Grid gleichverteilt */}
+                  <div className="grid grid-cols-4 gap-4 mb-2">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Ihr Wert</span>
                       <span className="text-base font-bold tabular-nums text-foreground">{fmtDe(benchmark.analysen_pro_fall_kunde)}</span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Benchmark</span>
                       <span className="text-base font-bold tabular-nums text-primary">{fmtDe(benchmark.analysen_pro_fall_benchmark)}</span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Abweichung</span>
                       <span className={`text-base font-bold tabular-nums ${diffVal > 0 ? "text-destructive" : "text-primary"}`}>
                         {diffVal > 0 ? "+" : ""}{fmtPct(diffPctVal)}
                       </span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
                       <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
                         {fmtInt(benchmark.hauptpot_net_euro)} €
@@ -427,25 +427,25 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                       Indikation
                     </p>
                   </div>
-                  {/* 4 Werte mit Labels - Grid mit festen Spalten */}
-                  <div className="grid grid-cols-[minmax(70px,1fr)_minmax(70px,1fr)_minmax(70px,1fr)_minmax(140px,1.5fr)] gap-4 mb-2">
-                    <div className="flex flex-col items-center">
+                  {/* 4 Werte mit Labels - Grid gleichverteilt */}
+                  <div className="grid grid-cols-4 gap-4 mb-2">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Ihr Wert</span>
                       <span className="text-base font-bold tabular-nums" style={{ color: diffVal > 0 ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
                         {fmtDe(benchmark.indikation.kunde)}%
                       </span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Benchmark</span>
                       <span className="text-base font-bold tabular-nums text-primary">{fmtDe(benchmark.indikation.benchmark)}%</span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Abweichung</span>
                       <span className={`text-base font-bold tabular-nums ${diffVal > 0 ? "text-destructive" : "text-primary"}`}>
                         {diffVal > 0 ? "+" : ""}{fmtPct(diffPctVal)}
                       </span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
                       <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
                         {fmtInt(euroVal)} €
@@ -484,27 +484,27 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                       Intensitat
                     </p>
                   </div>
-                  {/* 4 Werte mit Labels - Grid mit festen Spalten */}
-                  <div className="grid grid-cols-[minmax(70px,1fr)_minmax(70px,1fr)_minmax(70px,1fr)_minmax(140px,1.5fr)] gap-4 mb-2">
-                    <div className="flex flex-col items-center">
+                  {/* 4 Werte mit Labels - Grid gleichverteilt */}
+                  <div className="grid grid-cols-4 gap-4 mb-2">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Ihr Wert</span>
                       <span className="text-base font-bold tabular-nums" style={{ color: diffVal > 0 ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
                         {fmtDe(benchmark.intensitaet.kunde)} <span className="text-[10px] font-normal text-muted-foreground">A/F</span>
                       </span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Benchmark</span>
                       <span className="text-base font-bold tabular-nums text-primary">
                         {fmtDe(benchmark.intensitaet.benchmark)} <span className="text-[10px] font-normal text-muted-foreground">A/F</span>
                       </span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Abweichung</span>
                       <span className={`text-base font-bold tabular-nums ${diffVal > 0 ? "text-destructive" : "text-primary"}`}>
                         {diffVal > 0 ? "+" : ""}{fmtPct(diffPctVal)}
                       </span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
                       <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
                         {fmtInt(euroVal)} €
@@ -554,27 +554,27 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                       {subMeta.label}
                     </p>
                   </div>
-                  {/* 4 Werte mit Labels - Grid mit festen Spalten */}
-                  <div className="grid grid-cols-[minmax(70px,1fr)_minmax(70px,1fr)_minmax(70px,1fr)_minmax(140px,1.5fr)] gap-4 mb-2">
-                    <div className="flex flex-col items-center">
+                  {/* 4 Werte mit Labels - Grid gleichverteilt */}
+                  <div className="grid grid-cols-4 gap-4 mb-2">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Ihr Wert</span>
                       <span className="text-base font-bold tabular-nums" style={{ color: showAsNegative ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
                         {fmtDe(subData.kunde)} <span className="text-[10px] font-normal text-muted-foreground">{subMeta.unit}</span>
                       </span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Benchmark</span>
                       <span className="text-base font-bold tabular-nums text-primary">
                         {fmtDe(subData.benchmark)} <span className="text-[10px] font-normal text-muted-foreground">{subMeta.unit}</span>
                       </span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Abweichung</span>
                       <span className={`text-base font-bold tabular-nums ${showAsNegative ? "text-destructive" : "text-primary"}`}>
                         {diffVal > 0 ? "+" : ""}{fmtPct(diffPctVal)}
                       </span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
                       <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
                         {fmtInt(euroVal)} €
