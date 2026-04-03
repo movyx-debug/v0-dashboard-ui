@@ -390,10 +390,11 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     </div>
                     <div className="flex flex-col items-center">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
-                      <span className="text-base font-bold tabular-nums text-foreground whitespace-nowrap">
-                        {fmtInt(benchmark.hauptpot_net_analysen)} <span className="text-[10px] font-normal text-muted-foreground">A</span>
-                        <span className="text-[10px] font-normal text-muted-foreground"> / </span>
-                        <span className="text-primary">{fmtInt(benchmark.hauptpot_net_euro)} €</span>
+                      <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
+                        {fmtInt(benchmark.hauptpot_net_euro)} €
+                      </span>
+                      <span className="text-[9px] tabular-nums text-muted-foreground">
+                        {fmtInt(benchmark.hauptpot_net_analysen)} A
                       </span>
                     </div>
                   </div>
@@ -446,10 +447,11 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     </div>
                     <div className="flex flex-col items-center">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
-                      <span className="text-base font-bold tabular-nums whitespace-nowrap" style={{ color: HAUPT_META.indikation.color }}>
-                        {fmtInt(benchmark.indikation.analysen)} <span className="text-[10px] font-normal text-muted-foreground">A</span>
-                        <span className="text-[10px] font-normal text-muted-foreground"> / </span>
-                        <span className="text-primary">{fmtInt(euroVal)} €</span>
+                      <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
+                        {fmtInt(euroVal)} €
+                      </span>
+                      <span className="text-[9px] tabular-nums text-muted-foreground">
+                        {fmtInt(benchmark.indikation.analysen)} A
                       </span>
                     </div>
                   </div>
@@ -504,10 +506,11 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     </div>
                     <div className="flex flex-col items-center">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
-                      <span className="text-base font-bold tabular-nums whitespace-nowrap" style={{ color: HAUPT_META.intensitaet.color }}>
-                        {fmtInt(benchmark.intensitaet.analysen)} <span className="text-[10px] font-normal text-muted-foreground">A</span>
-                        <span className="text-[10px] font-normal text-muted-foreground"> / </span>
-                        <span className="text-primary">{fmtInt(euroVal)} €</span>
+                      <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
+                        {fmtInt(euroVal)} €
+                      </span>
+                      <span className="text-[9px] tabular-nums text-muted-foreground">
+                        {fmtInt(benchmark.intensitaet.analysen)} A
                       </span>
                     </div>
                   </div>
@@ -573,10 +576,11 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                     </div>
                     <div className="flex flex-col items-center">
                       <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
-                      <span className="text-base font-bold tabular-nums whitespace-nowrap" style={{ color: subMeta.color }}>
-                        {fmtInt(subData.analysen)} <span className="text-[10px] font-normal text-muted-foreground">A</span>
-                        <span className="text-[10px] font-normal text-muted-foreground"> / </span>
-                        <span className="text-primary">{fmtInt(euroVal)} €</span>
+                      <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
+                        {fmtInt(euroVal)} €
+                      </span>
+                      <span className="text-[9px] tabular-nums text-muted-foreground">
+                        {fmtInt(subData.analysen)} A
                       </span>
                     </div>
                   </div>
