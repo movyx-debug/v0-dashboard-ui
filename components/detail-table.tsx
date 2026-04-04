@@ -348,7 +348,7 @@ export default function DetailTable({
     className?: string;
   }) => (
     <TableHead
-      className={`text-[10px] font-medium px-1.5 py-2 cursor-pointer hover:bg-muted/50 transition-colors select-none ${
+      className={`text-xs font-medium px-2 py-2 cursor-pointer hover:bg-muted/50 transition-colors select-none ${
         align === "left" ? "text-left" : "text-right"
       } ${className}`}
       onClick={() => toggleSort(field)}
@@ -388,13 +388,13 @@ export default function DetailTable({
                 <HeadCell field="hauptpot_brut_euro" label={"Pot.\n€ brut"} title="Potenzial EUR brutto" />
                 <HeadCell field="erlosverlust_euro" label={"Erlös-\nverl."} title="Erlösverluste" className="text-red-400" />
                 <HeadCell field="hauptpot_net_euro" label={"Pot.\n€ net"} title="Potenzial EUR netto" className="font-semibold" />
-                <TableHead className="text-[10px] font-medium px-2 py-2 text-center" title="Hebelverteilung">
+                <TableHead className="text-xs font-medium px-2 py-2 text-center" title="Hebelverteilung">
                   Hebel
                 </TableHead>
                 {SUB_KEYS.map((key) => (
                   <TableHead
                     key={key}
-                    className="text-[10px] font-medium px-1.5 py-2 cursor-pointer hover:bg-muted/50 transition-colors select-none text-center"
+                    className="text-xs font-medium px-2 py-2 cursor-pointer hover:bg-muted/50 transition-colors select-none text-center"
                     onClick={() => toggleSort(`${key}_pct` as SortField)}
                     title={SUB_COLORS[key].label}
                   >
@@ -421,48 +421,46 @@ export default function DetailTable({
                   }}
                 >
                   <TableCell
-                    className="px-2.5 py-2 text-[11px] font-medium whitespace-nowrap max-w-[180px] truncate"
+                    className="px-2 py-2 text-xs font-medium max-w-[100px] truncate"
                     title={row.parameter_name}
                   >
                     {row.parameter_name}
                   </TableCell>
-                  <TableCell
-                    className="px-2.5 py-2 text-[11px] font-medium whitespace-nowrap"
-                  >
+                  <TableCell className="px-2 py-2 text-xs font-medium whitespace-nowrap">
                     {row.drg}
                   </TableCell>
                   <TableCell
-                    className="px-2.5 py-2 text-[11px] font-medium whitespace-nowrap max-w-[140px] truncate"
+                    className="px-2 py-2 text-xs font-medium max-w-[80px] truncate"
                     title={row.fachabteilung}
                   >
                     {row.fachabteilung}
                   </TableCell>
                   {/* Falle Kunde */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-muted-foreground whitespace-nowrap">
                     {fmtInt(row.faelle_kunde)}
                   </TableCell>
                   {/* Falle Benchmark */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-primary whitespace-nowrap">
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-primary whitespace-nowrap">
                     {fmtInt(row.faelle_benchmark)}
                   </TableCell>
                   {/* Analysen Kunde */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-muted-foreground whitespace-nowrap">
                     {fmtInt(row.analysen_kunde)}
                   </TableCell>
                   {/* Pot. Analysen -- normal style like A/F Kunde */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-muted-foreground whitespace-nowrap">
                     {fmtDe(row.hauptpot_net_analysen, 0)}
                   </TableCell>
                   {/* Pot. EUR (brutto) -- normal style */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-muted-foreground whitespace-nowrap">
                     {fmtEur(row.hauptpot_brut_euro)}
                   </TableCell>
                   {/* Erlosverluste -- red tinted */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-red-400 whitespace-nowrap">
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-red-400 whitespace-nowrap">
                     -{fmtEur(row.erlosverlust_euro)}
                   </TableCell>
                   {/* Pot. EUR netto -- bold black */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums font-bold text-foreground whitespace-nowrap">
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums font-bold text-foreground whitespace-nowrap">
                     {fmtEur(row.hauptpot_net_euro)}
                   </TableCell>
                   <TableCell colSpan={5} className="p-0">
