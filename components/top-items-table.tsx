@@ -194,7 +194,7 @@ export default function TopItemsTable({
         </div>
 
         {/* Table */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto no-scrollbar">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow>

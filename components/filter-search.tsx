@@ -115,7 +115,7 @@ export default function FilterSearch({
                   </span>
                 )}
               </div>
-              <div className="overflow-y-auto max-h-[276px]">
+              <div className="overflow-y-auto max-h-[276px] no-scrollbar">
                 {results.parameters.length === 0 ? (
                   <p className="p-3 text-[11px] text-muted-foreground/50 italic">
                     Keine Treffer
@@ -148,7 +148,7 @@ export default function FilterSearch({
                   </span>
                 )}
               </div>
-              <div className="overflow-y-auto max-h-[276px]">
+              <div className="overflow-y-auto max-h-[276px] no-scrollbar">
                 {results.drgs.length === 0 ? (
                   <p className="p-3 text-[11px] text-muted-foreground/50 italic">
                     Keine Treffer
@@ -181,7 +181,7 @@ export default function FilterSearch({
                   </span>
                 )}
               </div>
-              <div className="overflow-y-auto max-h-[276px]">
+              <div className="overflow-y-auto max-h-[276px] no-scrollbar">
                 {results.fachabteilungen.length === 0 ? (
                   <p className="p-3 text-[11px] text-muted-foreground/50 italic">
                     Keine Treffer

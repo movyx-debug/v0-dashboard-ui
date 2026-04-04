@@ -374,7 +374,7 @@ export default function DetailTable({
             {sorted.length} Einträge · Klicken zum Filtern
           </span>
         </div>
-        <div className="overflow-auto flex-1" style={{ maxHeight: "calc(100vh - 320px)" }}>
+        <div className="overflow-auto flex-1 no-scrollbar" style={{ maxHeight: "calc(100vh - 320px)" }}>
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
