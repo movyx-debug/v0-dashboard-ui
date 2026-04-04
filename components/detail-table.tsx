@@ -391,22 +391,31 @@ export default function DetailTable({
                 <TableHead className="text-xs font-medium px-2 py-2 text-center" title="Hebelverteilung">
                   Hebel
                 </TableHead>
-                {SUB_KEYS.map((key) => (
-                  <TableHead
-                    key={key}
-                    className="text-xs font-medium px-2 py-2 cursor-pointer hover:bg-muted/50 transition-colors select-none text-center"
-                    onClick={() => toggleSort(`${key}_pct` as SortField)}
-                    title={SUB_COLORS[key].label}
-                  >
-                    <span className="inline-flex items-center gap-0.5 justify-center">
-                      <span
-                        className="h-2 w-2 rounded-full inline-block flex-shrink-0"
-                        style={{ backgroundColor: SUB_COLORS[key].color }}
-                      />
-                      <SortIcon field={`${key}_pct` as SortField} />
-                    </span>
-                  </TableHead>
-                ))}
+                {SUB_KEYS.map((key) => {
+                  const shortLabels: Record<SubKey, string> = {
+                    indikation: "Ind.",
+                    multiCaseRate: "MFR",
+                    frequenz: "Freq.",
+                    monitorZeit: "MZ",
+                  };
+                  return (
+                    <TableHead
+                      key={key}
+                      className="text-xs font-medium px-2 py-2 cursor-pointer hover:bg-muted/50 transition-colors select-none text-center"
+                      onClick={() => toggleSort(`${key}_pct` as SortField)}
+                      title={SUB_COLORS[key].label}
+                    >
+                      <span className="inline-flex items-center gap-1 justify-center">
+                        <span
+                          className="h-2 w-2 rounded-full inline-block flex-shrink-0"
+                          style={{ backgroundColor: SUB_COLORS[key].color }}
+                        />
+                        <span className="whitespace-nowrap">{shortLabels[key]}</span>
+                        <SortIcon field={`${key}_pct` as SortField} />
+                      </span>
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -421,17 +430,22 @@ export default function DetailTable({
                   }}
                 >
                   <TableCell
-                    className="px-2 py-2 text-xs font-medium max-w-[100px] truncate"
+                    className="px-2 py-2 text-xs font-medium max-w-[100px] truncate hover:text-primary hover:underline underline-offset-2"
                     title={row.parameter_name}
+                    onClick={(e) => { e.stopPropagation(); onSelectParam(row.parameter_name); }}
                   >
                     {row.parameter_name}
                   </TableCell>
-                  <TableCell className="px-2 py-2 text-xs font-medium whitespace-nowrap">
+                  <TableCell 
+                    className="px-2 py-2 text-xs font-medium whitespace-nowrap hover:text-primary hover:underline underline-offset-2"
+                    onClick={(e) => { e.stopPropagation(); onSelectDrg(row.drg); }}
+                  >
                     {row.drg}
                   </TableCell>
                   <TableCell
-                    className="px-2 py-2 text-xs font-medium max-w-[80px] truncate"
+                    className="px-2 py-2 text-xs font-medium max-w-[80px] truncate hover:text-primary hover:underline underline-offset-2"
                     title={row.fachabteilung}
+                    onClick={(e) => { e.stopPropagation(); onSelectFach(row.fachabteilung); }}
                   >
                     {row.fachabteilung}
                   </TableCell>
