@@ -337,22 +337,25 @@ export default function DetailTable({
   const HeadCell = ({
     field,
     label,
+    title,
     align = "right",
     className = "",
   }: {
     field: SortField;
     label: string;
+    title?: string;
     align?: "left" | "right";
     className?: string;
   }) => (
     <TableHead
-      className={`text-[10px] font-medium px-2.5 py-2 whitespace-nowrap cursor-pointer hover:bg-muted/50 transition-colors select-none ${
+      className={`text-[10px] font-medium px-1.5 py-2 cursor-pointer hover:bg-muted/50 transition-colors select-none ${
         align === "left" ? "text-left" : "text-right"
       } ${className}`}
       onClick={() => toggleSort(field)}
+      title={title || label}
     >
       <span className={`inline-flex items-center gap-0.5 ${align === "left" ? "" : "justify-end"}`}>
-        {label}
+        <span className="leading-tight whitespace-pre-line text-center">{label}</span>
         <SortIcon field={field} />
       </span>
     </TableHead>
@@ -375,31 +378,31 @@ export default function DetailTable({
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
-                <HeadCell field="parameter_name" label="Parameter" align="left" />
+                <HeadCell field="parameter_name" label="Param." title="Parameter" align="left" />
                 <HeadCell field="drg" label="DRG" align="left" />
-                <HeadCell field="fachabteilung" label="Fachabteilung" align="left" />
-                <HeadCell field="faelle_kunde" label="Falle Kunde" />
-                <HeadCell field="faelle_benchmark" label="Falle Benchmark" />
-                <HeadCell field="analysen_kunde" label="Analysen Kunde" />
-                <HeadCell field="hauptpot_net_analysen" label="Pot. Analysen" />
-                <HeadCell field="hauptpot_brut_euro" label="Pot. EUR" />
-                <HeadCell field="erlosverlust_euro" label="Erlosverluste" className="text-red-400" />
-                <HeadCell field="hauptpot_net_euro" label="Pot. EUR netto" className="font-semibold" />
-                <TableHead className="text-[10px] font-medium px-3 py-2 whitespace-nowrap text-center min-w-[100px]">
+                <HeadCell field="fachabteilung" label="Fach" title="Fachabteilung" align="left" />
+                <HeadCell field="faelle_kunde" label={"Fälle\nKunde"} title="Fälle Kunde" />
+                <HeadCell field="faelle_benchmark" label={"Fälle\nBM"} title="Fälle Benchmark" />
+                <HeadCell field="analysen_kunde" label={"Anal.\nKunde"} title="Analysen Kunde" />
+                <HeadCell field="hauptpot_net_analysen" label={"Pot.\nAnal."} title="Potenzial Analysen" />
+                <HeadCell field="hauptpot_brut_euro" label={"Pot.\n€ brut"} title="Potenzial EUR brutto" />
+                <HeadCell field="erlosverlust_euro" label={"Erlös-\nverl."} title="Erlösverluste" className="text-red-400" />
+                <HeadCell field="hauptpot_net_euro" label={"Pot.\n€ net"} title="Potenzial EUR netto" className="font-semibold" />
+                <TableHead className="text-[10px] font-medium px-2 py-2 text-center" title="Hebelverteilung">
                   Hebel
                 </TableHead>
                 {SUB_KEYS.map((key) => (
                   <TableHead
                     key={key}
-                    className="text-[10px] font-medium px-2 py-2 whitespace-nowrap cursor-pointer hover:bg-muted/50 transition-colors select-none text-center min-w-[75px]"
+                    className="text-[10px] font-medium px-1.5 py-2 cursor-pointer hover:bg-muted/50 transition-colors select-none text-center"
                     onClick={() => toggleSort(`${key}_pct` as SortField)}
+                    title={SUB_COLORS[key].label}
                   >
-                    <span className="inline-flex items-center gap-1 justify-center">
+                    <span className="inline-flex items-center gap-0.5 justify-center">
                       <span
                         className="h-2 w-2 rounded-full inline-block flex-shrink-0"
                         style={{ backgroundColor: SUB_COLORS[key].color }}
                       />
-                      <span className="truncate">{SUB_COLORS[key].label}</span>
                       <SortIcon field={`${key}_pct` as SortField} />
                     </span>
                   </TableHead>
