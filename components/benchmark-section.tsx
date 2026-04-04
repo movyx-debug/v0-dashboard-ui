@@ -114,11 +114,11 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-        {/* Single horizontal cockpit row - 4 sections with equal height */}
-        <div className="px-5 py-4 grid grid-cols-[auto_1px_auto_1px_1fr_1px_auto] gap-5 items-stretch">
+      <div className="space-y-0">
+        {/* Horizontal cockpit row - separate tiles with gap */}
+        <div className="flex gap-3 items-stretch">
           {/* ── Section 1: Netto Einsparpotenzial ──────────────────────── */}
-          <div className="flex flex-col min-w-[180px]">
+          <div className="bg-card border rounded-xl px-5 py-4 flex flex-col min-w-[200px]">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               {title}
             </p>
@@ -163,11 +163,8 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
             </div>
           </div>
 
-          {/* ── Divider ────────────────────────────────────── */}
-          <div className="bg-border" />
-
           {/* ── Section 2: Potenzial-Hebel ───── */}
-          <div className="flex flex-col">
+          <div className="bg-card border rounded-xl px-5 py-4 flex flex-col">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Potenzial-Hebel / Anteil am Potenzial
             </p>
@@ -352,11 +349,8 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
             </div>
           </div>
 
-          {/* ── Divider ────────────────────────────────────── */}
-          <div className="bg-border" />
-
           {/* ── Section 3: Benchmarkvergleich ───── */}
-          <div className="flex flex-col min-w-0">
+          <div className="bg-card border rounded-xl px-5 py-4 flex flex-col flex-1 min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Benchmarkvergleich
             </p>
@@ -593,11 +587,8 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
             </div>
           </div>
 
-          {/* ── Divider ────────────────────────────────────── */}
-          <div className="bg-border" />
-
           {/* ── Section 4: Grundkennzahlen ───── */}
-          <div className="flex flex-col">
+          <div className="bg-card border rounded-xl px-5 py-4 flex flex-col min-w-[180px]">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               Grundkennzahlen
             </p>
