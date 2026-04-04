@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { BenchmarkRow } from "@/lib/benchmark-data";
 import {
   Table,
@@ -42,10 +42,21 @@ const fmtEur = (n: number) =>
 /* ── Sub-benchmark meta ──────────────────────────────────────── */
 const SUB_COLORS = {
   indikation: { color: "#5b8ab5", label: "Indikation", unit: "%" },
-  multiCaseRate: { color: "#cb7b5a", label: "MultiCaseRate", unit: "%" },
-  frequenz: { color: "#4da8a0", label: "Frequenz", unit: "Tage" },
-  monitorZeit: { color: "#c07a8e", label: "Monitorzeit", unit: "Tage" },
+  multiCaseRate: { color: "#d97706", label: "Monitorfallrate", unit: "%" },
+  frequenz: { color: "#ca8a04", label: "Frequenz", unit: "Tage" },
+  monitorZeit: { color: "#92400e", label: "Monitorzeit", unit: "Tage" },
 } as const;
+
+/* ── Hebel colors (matching top-items-table) ────────────────── */
+const INDIKATION_COLOR = "#5b8ab5";
+const INTENSITAET_COLOR = "#e07a34";
+
+const SUBS_HEBEL = [
+  { key: "indikation_pct" as const, color: INDIKATION_COLOR, label: "Indikation", isIntensitaet: false },
+  { key: "multiCaseRate_pct" as const, color: "#d97706", label: "Monitorfallrate", isIntensitaet: true },
+  { key: "frequenz_pct" as const, color: "#ca8a04", label: "Frequenz", isIntensitaet: true },
+  { key: "monitorZeit_pct" as const, color: "#92400e", label: "Monitorzeit", isIntensitaet: true },
+];
 
 type SubKey = keyof typeof SUB_COLORS;
 const SUB_KEYS: SubKey[] = ["indikation", "multiCaseRate", "frequenz", "monitorZeit"];
@@ -55,8 +66,9 @@ type SortField =
   | "parameter_name"
   | "drg"
   | "fachabteilung"
-  | "analysen_pro_fall_kunde"
-  | "analysen_pro_fall_benchmark"
+  | "faelle_kunde"
+  | "faelle_benchmark"
+  | "analysen_kunde"
   | "hauptpot_net_analysen"
   | "hauptpot_brut_euro"
   | "erlosverlust_euro"
@@ -102,85 +114,154 @@ const PHASE_COLORS = ["#4a7fad", "#5b8ab5", "#8bb0d0"];
 const PHASE_RATIOS = [0.42, 0.38, 0.20];
 const PHASE_NAMES = ["Aufnahme", "Verlauf", "Entlass"];
 
-/* ── Colored mini bar with tooltip ──────────────────────────── */
-function SubBar({ row, subKey }: { row: BenchmarkRow; subKey: SubKey }) {
-  const meta = SUB_COLORS[subKey];
-  const pctField = `${subKey}_pct` as keyof BenchmarkRow;
-  const pct = row[pctField] as number;
-  const { kunde, benchmark } = getSubValues(row, subKey);
+/* ── Combined Hebel + Values cells with single hover trigger ── */
+function HebelAndValuesCells({ row }: { row: BenchmarkRow }) {
+  // Helper to check if kunde is worse than benchmark
+  const isWorse = (subKey: SubKey) => {
+    const { kunde, benchmark } = getSubValues(row, subKey);
+    return kunde !== null && (
+      subKey === "frequenz" || subKey === "monitorZeit" 
+        ? kunde < benchmark
+        : kunde > benchmark
+    );
+  };
+
+  // Calculate Intensitaet (sum of 3 sub-hebel)
+  const intensitaetPct = row.multiCaseRate_pct + row.frequenz_pct + row.monitorZeit_pct;
+  const indikationPct = row.indikation_pct;
+
+  // Only 2 segments: Indikation + Intensitaet (aggregated)
+  const segments = [
+    { key: "indikation", pct: indikationPct, color: INDIKATION_COLOR },
+    { key: "intensitaet", pct: intensitaetPct, color: INTENSITAET_COLOR },
+  ].filter((s) => s.pct > 0);
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-1.5 cursor-default min-w-[70px]">
-          <div className="flex-1 h-[6px] rounded-full bg-secondary overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{
-                width: `${Math.min(Math.max(pct, 2), 100)}%`,
-                backgroundColor: meta.color,
-                opacity: pct === 0 ? 0.15 : 1,
-              }}
-            />
+        <div className="grid grid-cols-[100px_1fr_1fr_1fr_1fr] cursor-default">
+          {/* Hebel stacked bar - only 2 bars: Indikation vs Intensitaet */}
+          <div className="flex items-center px-3 py-2">
+            <div className="flex h-[8px] w-full min-w-[80px] rounded-full overflow-hidden bg-secondary">
+              {segments.map((seg) => (
+                <div
+                  key={seg.key}
+                  className="h-full transition-all duration-300 first:rounded-l-full last:rounded-r-full border-r border-white/80 last:border-r-0"
+                  style={{ width: `${seg.pct}%`, backgroundColor: seg.color }}
+                />
+              ))}
+            </div>
           </div>
-          <span
-            className="text-[10px] tabular-nums font-medium w-[28px] text-right"
-            style={{ color: pct > 0 ? meta.color : "hsl(var(--muted-foreground))" }}
-          >
-            {Math.round(pct)}%
-          </span>
+          {/* 4 value columns */}
+          {SUB_KEYS.map((subKey) => {
+            const meta = SUB_COLORS[subKey];
+            const { kunde, benchmark } = getSubValues(row, subKey);
+            const worse = isWorse(subKey);
+            return (
+              <div key={subKey} className="flex flex-col items-center px-2 py-2">
+                <span
+                  className="text-[10px] tabular-nums font-semibold"
+                  style={{ color: worse ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}
+                >
+                  {fmtDe(kunde)} <span className="text-[8px] font-normal text-muted-foreground">{meta.unit}</span>
+                </span>
+                <span className="text-[9px] tabular-nums text-primary">
+                  {fmtDe(benchmark)} <span className="text-[8px] font-normal text-muted-foreground/70">{meta.unit}</span>
+                </span>
+              </div>
+            );
+          })}
         </div>
       </TooltipTrigger>
       <TooltipContent
         side="top"
-        className="bg-card text-foreground border shadow-lg px-3 py-2.5"
+        align="center"
+        className="bg-card text-foreground border shadow-lg px-4 py-3"
       >
-        <p
-          className="text-[11px] font-semibold mb-1.5 flex items-center gap-1.5"
-          style={{ color: meta.color }}
-        >
-          <span
-            className="inline-block h-2 w-2 rounded-full"
-            style={{ backgroundColor: meta.color }}
-          />
-          {meta.label}
+        <p className="text-[10px] text-muted-foreground mb-2 font-medium uppercase tracking-wider">
+          Anteil am Potenzial
         </p>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-          <span className="text-muted-foreground">Kunde</span>
-          <span className="text-right font-semibold tabular-nums">
-            {fmtDe(kunde)} {meta.unit}
-          </span>
-          <span className="text-muted-foreground">Benchmark</span>
-          <span className="text-right font-semibold tabular-nums">
-            {fmtDe(benchmark)} {meta.unit}
-          </span>
-        </div>
-        <div className="mt-1.5 pt-1.5 border-t text-[10px] text-muted-foreground">
-          Anteil am Potenzial:{" "}
-          <span className="font-semibold" style={{ color: meta.color }}>
-            {Math.round(pct)}%
-          </span>
-        </div>
-        {/* Patientenphase breakdown (only for Indikation) */}
-        {subKey === "indikation" && pct > 0 && (
-          <div className="mt-1.5 pt-1.5 border-t">
-            <p className="text-[10px] text-muted-foreground mb-1">Patientenphase</p>
-            <div className="space-y-0.5">
-              {PHASE_NAMES.map((name, i) => (
-                <div key={name} className="flex items-center gap-1.5 text-[10px]">
-                  <span
-                    className="inline-block h-1.5 w-1.5 rounded-sm flex-shrink-0"
-                    style={{ backgroundColor: PHASE_COLORS[i] }}
-                  />
-                  <span className="text-muted-foreground flex-1">{name}</span>
-                  <span className="tabular-nums font-medium text-right" style={{ color: PHASE_COLORS[i] }}>
-                    {Math.round(PHASE_RATIOS[i] * 100)}%
-                  </span>
-                </div>
-              ))}
+        {/* Horizontal layout - all metrics side by side */}
+        <div className="flex items-start gap-5">
+          {/* Indikation */}
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: INDIKATION_COLOR }} />
+              <span className="text-[11px] font-semibold" style={{ color: INDIKATION_COLOR }}>Indikation</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-20 h-[6px] rounded-full bg-secondary overflow-hidden">
+                <div 
+                  className="h-full rounded-full" 
+                  style={{ 
+                    width: `${Math.min(row.indikation_pct, 100)}%`, 
+                    backgroundColor: INDIKATION_COLOR,
+                    opacity: row.indikation_pct === 0 ? 0.15 : 1,
+                  }} 
+                />
+              </div>
+              <span className="text-[12px] font-bold tabular-nums w-[36px]" style={{ color: INDIKATION_COLOR }}>
+                {Math.round(row.indikation_pct)}%
+              </span>
             </div>
           </div>
-        )}
+
+          {/* Divider */}
+          <div className="w-px bg-border self-stretch min-h-[50px]" />
+
+          {/* Intensitaet (Gesamt) */}
+          <div className="flex flex-col items-center">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: INTENSITAET_COLOR }} />
+              <span className="text-[11px] font-semibold" style={{ color: INTENSITAET_COLOR }}>Intensitat</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-20 h-[6px] rounded-full bg-secondary overflow-hidden">
+                <div 
+                  className="h-full rounded-full" 
+                  style={{ 
+                    width: `${Math.min(intensitaetPct, 100)}%`, 
+                    backgroundColor: INTENSITAET_COLOR,
+                    opacity: intensitaetPct === 0 ? 0.15 : 1,
+                  }} 
+                />
+              </div>
+              <span className="text-[12px] font-bold tabular-nums w-[36px]" style={{ color: INTENSITAET_COLOR }}>
+                {Math.round(intensitaetPct)}%
+              </span>
+            </div>
+          </div>
+
+          {/* Sub-Hebel der Intensitaet */}
+          {(["multiCaseRate", "frequenz", "monitorZeit"] as SubKey[]).map((subKey) => {
+            const meta = SUB_COLORS[subKey];
+            const pctField = `${subKey}_pct` as keyof BenchmarkRow;
+            const pct = row[pctField] as number;
+            return (
+              <div key={subKey} className="flex flex-col items-center">
+                <div className="flex items-center gap-1 mb-1.5">
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: meta.color }} />
+                  <span className="text-[10px] font-medium" style={{ color: meta.color }}>{meta.label}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-14 h-[5px] rounded-full bg-secondary overflow-hidden">
+                    <div 
+                      className="h-full rounded-full" 
+                      style={{ 
+                        width: `${Math.min(pct, 100)}%`, 
+                        backgroundColor: meta.color,
+                        opacity: pct === 0 ? 0.15 : 1,
+                      }} 
+                    />
+                  </div>
+                  <span className="text-[11px] font-semibold tabular-nums w-[32px]" style={{ color: meta.color }}>
+                    {Math.round(pct)}%
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </TooltipContent>
     </Tooltip>
   );
@@ -256,22 +337,25 @@ export default function DetailTable({
   const HeadCell = ({
     field,
     label,
+    title,
     align = "right",
     className = "",
   }: {
     field: SortField;
     label: string;
+    title?: string;
     align?: "left" | "right";
     className?: string;
   }) => (
     <TableHead
-      className={`text-[10px] font-medium px-2.5 py-2 whitespace-nowrap cursor-pointer hover:bg-muted/50 transition-colors select-none ${
+      className={`text-xs font-medium px-2 py-2 cursor-pointer hover:bg-muted/50 transition-colors select-none ${
         align === "left" ? "text-left" : "text-right"
       } ${className}`}
       onClick={() => toggleSort(field)}
+      title={title || label}
     >
       <span className={`inline-flex items-center gap-0.5 ${align === "left" ? "" : "justify-end"}`}>
-        {label}
+        <span className="leading-tight whitespace-pre-line text-center">{label}</span>
         <SortIcon field={field} />
       </span>
     </TableHead>
@@ -280,92 +364,122 @@ export default function DetailTable({
   return (
     <TooltipProvider delayDuration={100}>
       <div className="bg-card border rounded-2xl shadow-sm overflow-hidden flex flex-col">
-        <div className="overflow-auto flex-1" style={{ maxHeight: "calc(100vh - 280px)" }}>
+        {/* Header */}
+        <div className="px-5 py-3.5 border-b flex items-center gap-2 flex-shrink-0">
+          <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+          </svg>
+          <h3 className="text-sm font-semibold text-foreground">Detailansicht</h3>
+          <span className="text-[10px] text-muted-foreground ml-auto">
+            {sorted.length} Einträge · Klicken zum Filtern
+          </span>
+        </div>
+        <div className="overflow-auto flex-1 no-scrollbar" style={{ maxHeight: "calc(100vh - 320px)" }}>
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
-                <HeadCell field="parameter_name" label="Parameter" align="left" />
+                <HeadCell field="parameter_name" label="Param." title="Parameter" align="left" />
                 <HeadCell field="drg" label="DRG" align="left" />
-                <HeadCell field="fachabteilung" label="Fachabteilung" align="left" />
-                <HeadCell field="analysen_pro_fall_kunde" label="A/F Kunde" />
-                <HeadCell field="analysen_pro_fall_benchmark" label="A/F Benchmark" />
-                <HeadCell field="hauptpot_net_analysen" label="Pot. Analysen" />
-                <HeadCell field="hauptpot_brut_euro" label="Pot. EUR" />
-                <HeadCell field="erlosverlust_euro" label="Erlosverluste" className="text-red-400" />
-                <HeadCell field="hauptpot_net_euro" label="Pot. EUR netto" className="font-semibold" />
-                {SUB_KEYS.map((key) => (
-                  <TableHead
-                    key={key}
-                    className="text-[10px] font-medium px-2 py-2 whitespace-nowrap cursor-pointer hover:bg-muted/50 transition-colors select-none text-center min-w-[85px]"
-                    onClick={() => toggleSort(`${key}_pct` as SortField)}
-                  >
-                    <span className="inline-flex items-center gap-1 justify-center">
-                      <span
-                        className="h-2 w-2 rounded-full inline-block flex-shrink-0"
-                        style={{ backgroundColor: SUB_COLORS[key].color }}
-                      />
-                      <span className="truncate">{SUB_COLORS[key].label}</span>
-                      <SortIcon field={`${key}_pct` as SortField} />
-                    </span>
-                  </TableHead>
-                ))}
+                <HeadCell field="fachabteilung" label="Fach" title="Fachabteilung" align="left" />
+                <HeadCell field="faelle_kunde" label={"Fälle\nKunde"} title="Fälle Kunde" />
+                <HeadCell field="faelle_benchmark" label={"Fälle\nBM"} title="Fälle Benchmark" />
+                <HeadCell field="analysen_kunde" label={"Anal.\nKunde"} title="Analysen Kunde" />
+                <HeadCell field="hauptpot_net_analysen" label={"Pot.\nAnal."} title="Potenzial Analysen" />
+                <HeadCell field="hauptpot_brut_euro" label={"Pot.\n€ brut"} title="Potenzial EUR brutto" />
+                <HeadCell field="erlosverlust_euro" label={"Erlös-\nverl."} title="Erlösverluste" className="text-red-400" />
+                <HeadCell field="hauptpot_net_euro" label={"Pot.\n€ net"} title="Potenzial EUR netto" className="font-semibold" />
+                <TableHead className="text-xs font-medium px-2 py-2 text-center" title="Hebelverteilung">
+                  Hebel
+                </TableHead>
+                {SUB_KEYS.map((key) => {
+                  const shortLabels: Record<SubKey, string> = {
+                    indikation: "Ind.",
+                    multiCaseRate: "MFR",
+                    frequenz: "Freq.",
+                    monitorZeit: "MZ",
+                  };
+                  return (
+                    <TableHead
+                      key={key}
+                      className="text-xs font-medium px-2 py-2 cursor-pointer hover:bg-muted/50 transition-colors select-none text-center"
+                      onClick={() => toggleSort(`${key}_pct` as SortField)}
+                      title={SUB_COLORS[key].label}
+                    >
+                      <span className="inline-flex items-center gap-1 justify-center">
+                        <span
+                          className="h-2 w-2 rounded-full inline-block flex-shrink-0"
+                          style={{ backgroundColor: SUB_COLORS[key].color }}
+                        />
+                        <span className="whitespace-nowrap">{shortLabels[key]}</span>
+                        <SortIcon field={`${key}_pct` as SortField} />
+                      </span>
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             </TableHeader>
             <TableBody>
               {pageData.map((row, idx) => (
                 <TableRow
                   key={`${row.parameter_name}-${row.drg}-${row.fachabteilung}-${idx}`}
-                  className="hover:bg-muted/30"
+                  className="hover:bg-muted/30 cursor-pointer transition-colors"
+                  onClick={() => {
+                    onSelectParam(row.parameter_name);
+                    onSelectDrg(row.drg);
+                    onSelectFach(row.fachabteilung);
+                  }}
                 >
                   <TableCell
-                    className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap max-w-[180px] truncate"
-                    onClick={() => onSelectParam(row.parameter_name)}
+                    className="px-2 py-2 text-xs font-medium max-w-[100px] truncate hover:text-primary hover:underline underline-offset-2"
                     title={row.parameter_name}
+                    onClick={(e) => { e.stopPropagation(); onSelectParam(row.parameter_name); }}
                   >
                     {row.parameter_name}
                   </TableCell>
-                  <TableCell
-                    className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap"
-                    onClick={() => onSelectDrg(row.drg)}
+                  <TableCell 
+                    className="px-2 py-2 text-xs font-medium whitespace-nowrap hover:text-primary hover:underline underline-offset-2"
+                    onClick={(e) => { e.stopPropagation(); onSelectDrg(row.drg); }}
                   >
                     {row.drg}
                   </TableCell>
                   <TableCell
-                    className="px-2.5 py-2 text-[11px] font-medium cursor-pointer hover:text-primary hover:underline underline-offset-2 whitespace-nowrap max-w-[140px] truncate"
-                    onClick={() => onSelectFach(row.fachabteilung)}
+                    className="px-2 py-2 text-xs font-medium max-w-[80px] truncate hover:text-primary hover:underline underline-offset-2"
                     title={row.fachabteilung}
+                    onClick={(e) => { e.stopPropagation(); onSelectFach(row.fachabteilung); }}
                   >
                     {row.fachabteilung}
                   </TableCell>
-                  {/* A/F Kunde */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
-                    {fmtDe(row.analysen_pro_fall_kunde)}
+                  {/* Falle Kunde */}
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-muted-foreground whitespace-nowrap">
+                    {fmtInt(row.faelle_kunde)}
                   </TableCell>
-                  {/* A/F Benchmark */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
-                    {fmtDe(row.analysen_pro_fall_benchmark)}
+                  {/* Falle Benchmark */}
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-primary whitespace-nowrap">
+                    {fmtInt(row.faelle_benchmark)}
+                  </TableCell>
+                  {/* Analysen Kunde */}
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-muted-foreground whitespace-nowrap">
+                    {fmtInt(row.analysen_kunde)}
                   </TableCell>
                   {/* Pot. Analysen -- normal style like A/F Kunde */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-muted-foreground whitespace-nowrap">
                     {fmtDe(row.hauptpot_net_analysen, 0)}
                   </TableCell>
                   {/* Pot. EUR (brutto) -- normal style */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-muted-foreground whitespace-nowrap">
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-muted-foreground whitespace-nowrap">
                     {fmtEur(row.hauptpot_brut_euro)}
                   </TableCell>
                   {/* Erlosverluste -- red tinted */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums text-red-400 whitespace-nowrap">
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums text-red-400 whitespace-nowrap">
                     -{fmtEur(row.erlosverlust_euro)}
                   </TableCell>
                   {/* Pot. EUR netto -- bold black */}
-                  <TableCell className="px-2.5 py-2 text-[11px] text-right tabular-nums font-bold text-foreground whitespace-nowrap">
+                  <TableCell className="px-2 py-2 text-xs text-right tabular-nums font-bold text-foreground whitespace-nowrap">
                     {fmtEur(row.hauptpot_net_euro)}
                   </TableCell>
-                  {SUB_KEYS.map((key) => (
-                    <TableCell key={key} className="px-2 py-2">
-                      <SubBar row={row} subKey={key} />
-                    </TableCell>
-                  ))}
+                  <TableCell colSpan={5} className="p-0">
+                    <HebelAndValuesCells row={row} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

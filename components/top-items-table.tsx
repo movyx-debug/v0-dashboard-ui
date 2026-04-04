@@ -35,10 +35,14 @@ const SUBS = [
 
 /* ── Stacked bar with hover popup ──────────────────────────── */
 function StackedBar({ item }: { item: TopItem }) {
-  const segments = SUBS.map((s) => ({
-    ...s,
-    pct: item[s.key],
-  })).filter((s) => s.pct > 0);
+  // Only 2 segments: Indikation + Intensitaet (aggregated)
+  const indikationPct = item.indikation_pct;
+  const intensitaetPct = item.multiCaseRate_pct + item.frequenz_pct + item.monitorZeit_pct;
+  
+  const segments = [
+    { key: "indikation", pct: indikationPct, color: INDIKATION_COLOR },
+    { key: "intensitaet", pct: intensitaetPct, color: INTENSITAET_COLOR },
+  ].filter((s) => s.pct > 0);
 
   return (
     <Tooltip>
@@ -190,7 +194,7 @@ export default function TopItemsTable({
         </div>
 
         {/* Table */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto no-scrollbar">
           <Table>
             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow>

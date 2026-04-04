@@ -5,6 +5,8 @@ export interface BenchmarkRow {
   drg: string;
   fachabteilung: string;
   faelle_kunde: number;
+  faelle_benchmark: number;
+  analysen_kunde: number;
   faelle_mit_anforderung_kunde: number;
   multifaelle: number;
   analysen: number;
@@ -100,9 +102,22 @@ export interface AggregatedBenchmark {
   orgUnits: OrgUnitShare[];
 }
 
+// ── Helper to compute derived fields ─────────────────────────────────────────
+
+type RawBenchmarkRow = Omit<BenchmarkRow, "faelle_benchmark" | "analysen_kunde">;
+
+function enrichRow(row: RawBenchmarkRow): BenchmarkRow {
+  // faelle_benchmark: estimated from benchmark analysen / benchmark A/F rate
+  // Using kunde faelle as base and scaling by benchmark metrics
+  const faelle_benchmark = Math.round(row.faelle_kunde * (row.indikationsquote_benchmark / Math.max(row.indikationsquote_kunde, 1)) * 1.1);
+  // analysen_kunde is simply the analysen field (total analysen for this row)
+  const analysen_kunde = row.analysen;
+  return { ...row, faelle_benchmark, analysen_kunde };
+}
+
 // ── Mock data (inspired by real schema) ──────────────────────────────────────
 
-export const MOCK_DATA: BenchmarkRow[] = [
+const RAW_MOCK_DATA: RawBenchmarkRow[] = [
   {
     parameter_name: "Procalcitonin, immunologisch",
     drg: "801A",
@@ -282,11 +297,14 @@ export const MOCK_DATA: BenchmarkRow[] = [
     span_kunde: 5.6, span_benchmark: 4.2,
     hauptpot_net_analysen: 130, pot_indikation_analysen: 36,
     pot_multiCaseRate_analysen: 46, pot_frequenz_analysen: 30, pot_spanDay_analysen: 18,
-    indikation_pct: 28, multiCaseRate_pct: 35, frequenz_pct: 23, monitorZeit_pct: 14,
+  indikation_pct: 28, multiCaseRate_pct: 35, frequenz_pct: 23, monitorZeit_pct: 14,
   },
 ];
 
-// ── Aggregation helper ───────────────────────────────────────────────────────
+// Apply enrichment to get final MOCK_DATA with computed fields
+export const MOCK_DATA: BenchmarkRow[] = RAW_MOCK_DATA.map(enrichRow);
+  
+  // ── Aggregation helper ───────────────────────────────────────────────────────
 
 export function aggregateBenchmark(
   data: BenchmarkRow[],

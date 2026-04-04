@@ -37,7 +37,7 @@ const HAUPT_META = {
     label: "Indikation",
     desc: "Anteil der Falle mit initialer Laboranforderung",
     longDesc:
-      "Vergleich der Indikationsquote: In wie viel Prozent der Falle wird der Parameter initial angefordert? Ein hoherer Wert als der Benchmark kann darauf hindeuten, dass der Parameter bei zu vielen Patienten routinemassig bestellt wird.",
+      "Anteil der stationaren Falle, bei denen mindestens eine Laboranforderung erfolgt ist. Ein hoherer Wert als der Benchmark deutet auf haufigere Routineanforderungen hin.",
     unit: "%",
   },
   intensitaet: {
@@ -47,7 +47,7 @@ const HAUPT_META = {
     label: "Intensitat",
     desc: "Anforderungen pro indiziertem Fall",
     longDesc:
-      "Die Intensitat beschreibt, wie viele Anforderungen pro indiziertem Fall erfolgen. Dieser Hebel setzt sich zusammen aus der Monitorfallrate (wie viele Falle ins Monitoring gehen), der Frequenz (wie haufig nachbestellt wird) und der Monitorzeit (wie lange das Monitoring dauert).",
+      "Anzahl der Laboranalysen pro indiziertem Fall. Setzt sich zusammen aus Monitorfallrate, Frequenz und Monitorzeit.",
     unit: "A/F",
   },
 } as const;
@@ -61,7 +61,7 @@ const INTENSITAET_SUB_META = {
     label: "Monitorfallrate",
     desc: "Gehen zu viele Falle ins Monitoring?",
     longDesc:
-      "Vergleich der MultiCaseRate: Welcher Anteil der Falle mit Erstanforderung wird wiederholt untersucht (Monitoring)? Ein hoherer Wert bedeutet, dass mehr Patienten als notig ins Monitoring gehen.",
+      "Anteil der indizierten Falle mit Mehrfachanforderungen. Ein hoherer Wert bedeutet, dass mehr Patienten ins Monitoring gehen als vergleichbare Hauser.",
     unit: "%",
   },
   frequenz: {
@@ -71,7 +71,7 @@ const INTENSITAET_SUB_META = {
     label: "Frequenz",
     desc: "Wird der Parameter zu haufig nachbestellt?",
     longDesc:
-      "Vergleich der Anforderungsfrequenz: Wie viele Tage liegen im Schnitt zwischen zwei Anforderungen? Ein niedrigerer Wert als der Benchmark bedeutet, dass haufiger als notig nachbestellt wird.",
+      "Mittlere Zeit zwischen zwei Anforderungen. Ein niedrigerer Wert als der Benchmark bedeutet haufigere Nachbestellungen.",
     unit: "Tage",
   },
   monitorZeit: {
@@ -81,7 +81,7 @@ const INTENSITAET_SUB_META = {
     label: "Monitorzeit",
     desc: "Dauert das Monitoring zu lange?",
     longDesc:
-      "Vergleich der Monitoring-Zeitspanne: Wie viele Tage wird ein Patient im Schnitt uberwacht? Ein hoherer Wert deutet auf unnotig langes Monitoring hin.",
+      "Zeitraum, uber den ein Monitoring bzw. Mehrfachanforderungen im Schnitt durchgefuhrt werden. Ein hoherer Wert deutet auf langeres Monitoring hin.",
     unit: "Tage",
   },
 } as const;
@@ -114,165 +114,61 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
-        {/* Single horizontal cockpit row */}
-        <div className="px-5 py-4 flex items-center gap-5 flex-wrap lg:flex-nowrap">
-          {/* ── LEFT: Main EUR result ──────────────────────── */}
-          <div className="flex-shrink-0 min-w-[180px]">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-0.5">
+      <div className="space-y-0">
+        {/* Horizontal cockpit row - separate tiles with gap */}
+        <div className="flex gap-3 items-stretch">
+          {/* ── Section 1: Netto Einsparpotenzial ──────────────────────── */}
+          <div className="bg-card border rounded-xl px-5 py-4 flex flex-col min-w-[200px]">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
               {title}
             </p>
-            <div className="flex items-baseline gap-2">
-              <p className="text-3xl font-extrabold text-foreground tracking-tight leading-none tabular-nums">
-                {fmtInt(benchmark.hauptpot_net_euro)}
-              </p>
-              <span className="text-sm font-semibold text-muted-foreground">
-                EUR
-              </span>
-              <span
-                className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-md ${
-                  isAbove
-                    ? "bg-destructive/10 text-destructive"
-                    : "bg-primary/10 text-primary"
-                }`}
-              >
-                {isAbove ? (
-                  <TrendingUp className="h-3 w-3" />
-                ) : (
-                  <TrendingDown className="h-3 w-3" />
-                )}
-                {isAbove ? "+" : ""}
-                {fmtPct(Math.abs(diffPct))}
-              </span>
-            </div>
-            <div className="mt-1.5 space-y-0 text-[10px] tabular-nums">
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground/70">Brutto</span>
-                <span className="text-muted-foreground">{fmtInt(Math.round(benchmark.hauptpot_brut_euro))} EUR</span>
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-extrabold text-foreground tracking-tight leading-none tabular-nums">
+                  {fmtInt(benchmark.hauptpot_net_euro)}
+                </p>
+                <span className="text-sm font-semibold text-muted-foreground">
+                  EUR
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded-md ${
+                    isAbove
+                      ? "bg-destructive/10 text-destructive"
+                      : "bg-primary/10 text-primary"
+                  }`}
+                >
+                  {isAbove ? (
+                    <TrendingUp className="h-3 w-3" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3" />
+                  )}
+                  {isAbove ? "+" : ""}
+                  {fmtPct(Math.abs(diffPct))}
+                </span>
               </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-red-400/60">Erlosverluste</span>
-                <span className="text-red-400/80">-{fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-primary/70">Analysen</span>
-                <span className="text-primary">{fmtInt(benchmark.hauptpot_net_analysen)} ({benchmark.total_analysen > 0 ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100) : "0%"})</span>
+              <div className="mt-1.5 space-y-0 text-[10px] tabular-nums">
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground/70">Brutto</span>
+                  <span className="text-muted-foreground">{fmtInt(Math.round(benchmark.hauptpot_brut_euro))} EUR</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-red-400/60">Erlosverluste</span>
+                  <span className="text-red-400/80">-{fmtInt(Math.round(benchmark.erlosverlust_euro))} EUR</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-primary/70">Analysen</span>
+                  <span className="text-primary">{fmtInt(benchmark.hauptpot_net_analysen)} ({benchmark.total_analysen > 0 ? fmtPct((benchmark.hauptpot_net_analysen / benchmark.total_analysen) * 100) : "0%"})</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* ── Divider ────────────────────────────────────── */}
-          <div className="hidden lg:block w-px self-stretch bg-border" />
-
-          {/* ── CENTER: Potenzial-Hebel (2 Haupt + 3 Sub unter Intensitat) ───── */}
-          <div className="flex-shrink-0">
-            <div className="flex items-center gap-2 mb-2">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-                Potenzial-Hebel
-              </p>
-            </div>
-            
-            {/* Stacked Bar: Indikation + Intensitaet (mit Sub-Hebeln) */}
-            {(() => {
-              // Berechne relative Anteile basierend auf Potenzial-Analysen
-              const indPot = benchmark.indikation.analysen;
-              const intPot = benchmark.intensitaet.analysen;
-              const totalPot = indPot + intPot;
-              const indPct = totalPot > 0 ? (indPot / totalPot) * 100 : 50;
-              const intPct = totalPot > 0 ? (intPot / totalPot) * 100 : 50;
-              
-              // Sub-Hebel Anteile innerhalb Intensitaet
-              const subTotal = benchmark.intensitaet.subHebel.multiCaseRate.analysen + 
-                               benchmark.intensitaet.subHebel.frequenz.analysen + 
-                               benchmark.intensitaet.subHebel.monitorZeit.analysen;
-              const multiPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.multiCaseRate.analysen / subTotal) * intPct : intPct / 3;
-              const freqPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.frequenz.analysen / subTotal) * intPct : intPct / 3;
-              const monPct = subTotal > 0 ? (benchmark.intensitaet.subHebel.monitorZeit.analysen / subTotal) * intPct : intPct / 3;
-              
-              return (
-                <div className="mb-3">
-                  <div className="flex h-2.5 rounded-full overflow-hidden bg-secondary/40">
-                    {/* Indikation */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div 
-                          className="h-full transition-all cursor-pointer hover:opacity-80"
-                          style={{ width: `${indPct}%`, backgroundColor: HAUPT_META.indikation.color }}
-                          onClick={() => {
-                            setActiveHaupt(activeHaupt === "indikation" ? null : "indikation");
-                            setActiveSubHebel(null);
-                          }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-[10px]">
-                        <span style={{ color: HAUPT_META.indikation.color }}>Indikation</span>: {Math.round(indPct)}%
-                      </TooltipContent>
-                    </Tooltip>
-                    {/* Intensitaet aufgeteilt in 3 Sub-Hebel */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div 
-                          className="h-full transition-all cursor-pointer hover:opacity-80"
-                          style={{ width: `${multiPct}%`, backgroundColor: INTENSITAET_SUB_META.multiCaseRate.color }}
-                          onClick={() => {
-                            setActiveHaupt("intensitaet");
-                            setActiveSubHebel(activeSubHebel === "multiCaseRate" ? null : "multiCaseRate");
-                          }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-[10px]">
-                        <span style={{ color: INTENSITAET_SUB_META.multiCaseRate.color }}>Monitorfallrate</span>: {Math.round(multiPct)}%
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div 
-                          className="h-full transition-all cursor-pointer hover:opacity-80"
-                          style={{ width: `${freqPct}%`, backgroundColor: INTENSITAET_SUB_META.frequenz.color }}
-                          onClick={() => {
-                            setActiveHaupt("intensitaet");
-                            setActiveSubHebel(activeSubHebel === "frequenz" ? null : "frequenz");
-                          }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-[10px]">
-                        <span style={{ color: INTENSITAET_SUB_META.frequenz.color }}>Frequenz</span>: {Math.round(freqPct)}%
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div 
-                          className="h-full transition-all cursor-pointer hover:opacity-80"
-                          style={{ width: `${monPct}%`, backgroundColor: INTENSITAET_SUB_META.monitorZeit.color }}
-                          onClick={() => {
-                            setActiveHaupt("intensitaet");
-                            setActiveSubHebel(activeSubHebel === "monitorZeit" ? null : "monitorZeit");
-                          }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="text-[10px]">
-                        <span style={{ color: INTENSITAET_SUB_META.monitorZeit.color }}>Monitorzeit</span>: {Math.round(monPct)}%
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  {/* Legende */}
-                  <div className="flex justify-between mt-1 text-[9px] text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: HAUPT_META.indikation.color }} />
-                      <span>Indikation</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground/60">Intensitat:</span>
-                      <div className="flex items-center gap-0.5">
-                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: INTENSITAET_SUB_META.multiCaseRate.color }} />
-                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: INTENSITAET_SUB_META.frequenz.color }} />
-                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: INTENSITAET_SUB_META.monitorZeit.color }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
+          {/* ── Section 2: Potenzial-Hebel ───── */}
+          <div className="bg-card border rounded-xl px-5 py-4 flex flex-col">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+              Potenzial-Hebel / Anteil am Potenzial
+            </p>
+            <div className="flex-1 flex items-center">
             
             <div className="flex gap-3">
               {/* Indikation tile */}
@@ -450,136 +346,253 @@ export default function BenchmarkSection({ benchmark, title }: Props) {
                 </div>
               </div>
             </div>
+            </div>
           </div>
 
-          {/* ── Divider ────────────────────────────────────── */}
-          <div className="hidden lg:block w-px self-stretch bg-border" />
-
-          {/* ── RIGHT: Context-sensitive explanation area + Kennzahlen ───── */}
-          <div className="flex-1 flex gap-4 min-w-0">
-            {/* Erklaerungsbereich */}
-            <div className="flex-1 min-w-0">
+          {/* ── Section 3: Benchmarkvergleich ───── */}
+          <div className="bg-card border rounded-xl px-5 py-4 flex flex-col flex-1 min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+              Benchmarkvergleich
+            </p>
+            <div className="flex-1 flex flex-col justify-center">
             {/* Default: Analysen pro Fall */}
-            {!activeHaupt && (
-              <div className="rounded-lg border-l-[3px] border-border/50 bg-muted/30 p-3 transition-all">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-                    Analysen pro Fall
+            {!activeHaupt && (() => {
+              const diffVal = benchmark.analysen_pro_fall_kunde - benchmark.analysen_pro_fall_benchmark;
+              const diffPctVal = benchmark.analysen_pro_fall_benchmark > 0 
+                ? (diffVal / benchmark.analysen_pro_fall_benchmark) * 100 
+                : 0;
+              return (
+                <div className="rounded-lg border-l-[3px] border-border/50 bg-muted/30 p-3 transition-all">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+                    Anforderungen pro Fall
+                  </p>
+                  {/* 4 Werte mit Labels - Grid gleichverteilt */}
+                  <div className="grid grid-cols-4 gap-4 mb-2">
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Ihr Wert</span>
+                      <span className="text-base font-bold tabular-nums text-foreground">{fmtDe(benchmark.analysen_pro_fall_kunde)}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Benchmark</span>
+                      <span className="text-base font-bold tabular-nums text-primary">{fmtDe(benchmark.analysen_pro_fall_benchmark)}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Abweichung</span>
+                      <span className={`text-base font-bold tabular-nums ${diffVal > 0 ? "text-destructive" : "text-primary"}`}>
+                        {diffVal > 0 ? "+" : ""}{fmtPct(diffPctVal)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
+                      <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
+                        {fmtInt(benchmark.hauptpot_net_euro)} €
+                      </span>
+                      <span className="text-[9px] tabular-nums text-muted-foreground">
+                        {fmtInt(benchmark.hauptpot_net_analysen)} A
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Anzahl der Laboranalysen pro stationarem Fall. Setzt sich zusammen aus <span className="font-medium text-foreground">Indikation</span> (Anteil Falle mit Laboranforderung) und <span className="font-medium text-foreground">Intensitat</span> (Analysen pro indiziertem Fall).
                   </p>
                 </div>
-                <div className="flex items-center gap-3 mb-1.5">
-                  <span className="text-base font-bold tabular-nums text-foreground">{fmtDe(benchmark.analysen_pro_fall_kunde)}</span>
-                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-base font-bold tabular-nums text-primary">{fmtDe(benchmark.analysen_pro_fall_benchmark)}</span>
-                  <span className="text-[10px] text-muted-foreground">(Benchmark)</span>
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Dieser Wert zeigt, wie viele Laboranalysen pro stationarem Fall durchgefuhrt werden. Er setzt sich zusammen aus der <span className="font-medium text-foreground">Indikation</span> (bei wie vielen Fallen wird uberhaupt Labor angefordert) und der <span className="font-medium text-foreground">Intensitat</span> (wie viele Anforderungen pro indiziertem Fall). Klicken Sie auf einen Hebel, um Details zu sehen.
-                </p>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Indikation selected */}
-            {activeHaupt === "indikation" && (
-              <div 
-                className="rounded-lg border-l-[3px] p-3 transition-all"
-                style={{ 
-                  borderLeftColor: HAUPT_META.indikation.color,
-                  backgroundColor: `${HAUPT_META.indikation.color}08`,
-                }}
-              >
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Activity className="h-4 w-4" style={{ color: HAUPT_META.indikation.color }} />
-                  <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: HAUPT_META.indikation.color }}>
-                    Indikation
+            {activeHaupt === "indikation" && (() => {
+              const diffVal = benchmark.indikation.kunde - benchmark.indikation.benchmark;
+              const diffPctVal = benchmark.indikation.benchmark > 0 
+                ? (diffVal / benchmark.indikation.benchmark) * 100 
+                : 0;
+              // Euro berechnen: Anteil * Gesamt-Euro
+              const euroVal = benchmark.hauptpot_net_euro * (benchmark.indikation.pct / 100);
+              return (
+                <div 
+                  className="rounded-lg border-l-[3px] p-3 transition-all"
+                  style={{ 
+                    borderLeftColor: HAUPT_META.indikation.color,
+                    backgroundColor: `${HAUPT_META.indikation.color}08`,
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Activity className="h-4 w-4" style={{ color: HAUPT_META.indikation.color }} />
+                    <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: HAUPT_META.indikation.color }}>
+                      Indikation
+                    </p>
+                  </div>
+                  {/* 4 Werte mit Labels - Grid gleichverteilt */}
+                  <div className="grid grid-cols-4 gap-4 mb-2">
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Ihr Wert</span>
+                      <span className="text-base font-bold tabular-nums" style={{ color: diffVal > 0 ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
+                        {fmtDe(benchmark.indikation.kunde)}%
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Benchmark</span>
+                      <span className="text-base font-bold tabular-nums text-primary">{fmtDe(benchmark.indikation.benchmark)}%</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Abweichung</span>
+                      <span className={`text-base font-bold tabular-nums ${diffVal > 0 ? "text-destructive" : "text-primary"}`}>
+                        {diffVal > 0 ? "+" : ""}{fmtPct(diffPctVal)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
+                      <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
+                        {fmtInt(euroVal)} €
+                      </span>
+                      <span className="text-[9px] tabular-nums text-muted-foreground">
+                        {fmtInt(benchmark.indikation.analysen)} A
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    {HAUPT_META.indikation.longDesc}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 mb-1.5">
-                  <span className="text-base font-bold tabular-nums" style={{ color: benchmark.indikation.kunde > benchmark.indikation.benchmark ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
-                    {fmtDe(benchmark.indikation.kunde)}%
-                  </span>
-                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-base font-bold tabular-nums text-primary">{fmtDe(benchmark.indikation.benchmark)}%</span>
-                  <span className="text-[10px] text-muted-foreground">(Benchmark)</span>
-                  <span className="text-[10px] font-medium tabular-nums ml-auto" style={{ color: HAUPT_META.indikation.color }}>
-                    {fmtInt(benchmark.indikation.analysen)} Analysen ({fmtPct(benchmark.indikation.pct)})
-                  </span>
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {HAUPT_META.indikation.longDesc}
-                </p>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Intensitat selected (no sub-hebel active) */}
-            {activeHaupt === "intensitaet" && !activeSubHebel && (
-              <div 
-                className="rounded-lg border-l-[3px] p-3 transition-all"
-                style={{ 
-                  borderLeftColor: HAUPT_META.intensitaet.color,
-                  backgroundColor: `${HAUPT_META.intensitaet.color}08`,
-                }}
-              >
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Layers className="h-4 w-4" style={{ color: HAUPT_META.intensitaet.color }} />
-                  <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: HAUPT_META.intensitaet.color }}>
-                    Intensitat
+            {activeHaupt === "intensitaet" && !activeSubHebel && (() => {
+              const diffVal = benchmark.intensitaet.kunde - benchmark.intensitaet.benchmark;
+              const diffPctVal = benchmark.intensitaet.benchmark > 0 
+                ? (diffVal / benchmark.intensitaet.benchmark) * 100 
+                : 0;
+              // Euro berechnen: Anteil * Gesamt-Euro
+              const euroVal = benchmark.hauptpot_net_euro * (benchmark.intensitaet.pct / 100);
+              return (
+                <div 
+                  className="rounded-lg border-l-[3px] p-3 transition-all"
+                  style={{ 
+                    borderLeftColor: HAUPT_META.intensitaet.color,
+                    backgroundColor: `${HAUPT_META.intensitaet.color}08`,
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <Layers className="h-4 w-4" style={{ color: HAUPT_META.intensitaet.color }} />
+                    <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: HAUPT_META.intensitaet.color }}>
+                      Intensitat
+                    </p>
+                  </div>
+                  {/* 4 Werte mit Labels - Grid gleichverteilt */}
+                  <div className="grid grid-cols-4 gap-4 mb-2">
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Ihr Wert</span>
+                      <span className="text-base font-bold tabular-nums" style={{ color: diffVal > 0 ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
+                        {fmtDe(benchmark.intensitaet.kunde)} <span className="text-[10px] font-normal text-muted-foreground">A/F</span>
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Benchmark</span>
+                      <span className="text-base font-bold tabular-nums text-primary">
+                        {fmtDe(benchmark.intensitaet.benchmark)} <span className="text-[10px] font-normal text-muted-foreground">A/F</span>
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Abweichung</span>
+                      <span className={`text-base font-bold tabular-nums ${diffVal > 0 ? "text-destructive" : "text-primary"}`}>
+                        {diffVal > 0 ? "+" : ""}{fmtPct(diffPctVal)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
+                      <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
+                        {fmtInt(euroVal)} €
+                      </span>
+                      <span className="text-[9px] tabular-nums text-muted-foreground">
+                        {fmtInt(benchmark.intensitaet.analysen)} A
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    {HAUPT_META.intensitaet.longDesc}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 mb-1.5">
-                  <span className="text-base font-bold tabular-nums" style={{ color: benchmark.intensitaet.kunde > benchmark.intensitaet.benchmark ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
-                    {fmtDe(benchmark.intensitaet.kunde)}
-                  </span>
-                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-base font-bold tabular-nums text-primary">{fmtDe(benchmark.intensitaet.benchmark)}</span>
-                  <span className="text-[10px] text-muted-foreground">(Benchmark)</span>
-                  <span className="text-[10px] font-medium tabular-nums ml-auto" style={{ color: HAUPT_META.intensitaet.color }}>
-                    {fmtInt(benchmark.intensitaet.analysen)} Analysen ({fmtPct(benchmark.intensitaet.pct)})
-                  </span>
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {HAUPT_META.intensitaet.longDesc}
-                </p>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Sub-Hebel selected */}
-            {activeSubHebel && (
-              <div 
-                className="rounded-lg border-l-[3px] p-3 transition-all"
-                style={{ 
-                  borderLeftColor: INTENSITAET_SUB_META[activeSubHebel].color,
-                  backgroundColor: `${INTENSITAET_SUB_META[activeSubHebel].color}08`,
-                }}
-              >
-                <div className="flex items-center gap-2 mb-1.5">
-                  {React.createElement(INTENSITAET_SUB_META[activeSubHebel].icon, {
-                    className: "h-4 w-4",
-                    style: { color: INTENSITAET_SUB_META[activeSubHebel].color }
-                  })}
-                  <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: INTENSITAET_SUB_META[activeSubHebel].color }}>
-                    {INTENSITAET_SUB_META[activeSubHebel].label}
+            {activeSubHebel && (() => {
+              const subData = benchmark.intensitaet.subHebel[activeSubHebel];
+              const subMeta = INTENSITAET_SUB_META[activeSubHebel];
+              const diffVal = subData.kunde - subData.benchmark;
+              // Fuer Frequenz ist hoeher = besser (mehr Tage zwischen Anforderungen)
+              // Fuer Monitorzeit ist niedriger = besser
+              // Fuer Monitorfallrate ist niedriger = besser
+              const isHigherBad = activeSubHebel !== "frequenz";
+              const diffPctVal = subData.benchmark > 0 
+                ? (diffVal / subData.benchmark) * 100 
+                : 0;
+              const showAsNegative = isHigherBad ? diffVal > 0 : diffVal < 0;
+              // Euro berechnen: Sub-Hebel Anteil innerhalb Intensitaet * Intensitaet-Euro
+              const intensitaetEuro = benchmark.hauptpot_net_euro * (benchmark.intensitaet.pct / 100);
+              const euroVal = intensitaetEuro * (subData.pct / 100);
+              return (
+                <div 
+                  className="rounded-lg border-l-[3px] p-3 transition-all"
+                  style={{ 
+                    borderLeftColor: subMeta.color,
+                    backgroundColor: `${subMeta.color}08`,
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    {React.createElement(subMeta.icon, {
+                      className: "h-4 w-4",
+                      style: { color: subMeta.color }
+                    })}
+                    <p className="text-[10px] uppercase tracking-widest font-medium" style={{ color: subMeta.color }}>
+                      {subMeta.label}
+                    </p>
+                  </div>
+                  {/* 4 Werte mit Labels - Grid gleichverteilt */}
+                  <div className="grid grid-cols-4 gap-4 mb-2">
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Ihr Wert</span>
+                      <span className="text-base font-bold tabular-nums" style={{ color: showAsNegative ? "hsl(var(--destructive))" : "hsl(var(--foreground))" }}>
+                        {fmtDe(subData.kunde)} <span className="text-[10px] font-normal text-muted-foreground">{subMeta.unit}</span>
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Benchmark</span>
+                      <span className="text-base font-bold tabular-nums text-primary">
+                        {fmtDe(subData.benchmark)} <span className="text-[10px] font-normal text-muted-foreground">{subMeta.unit}</span>
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Abweichung</span>
+                      <span className={`text-base font-bold tabular-nums ${showAsNegative ? "text-destructive" : "text-primary"}`}>
+                        {diffVal > 0 ? "+" : ""}{fmtPct(diffPctVal)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground/70 mb-0.5">Potenzial</span>
+                      <span className="text-base font-bold tabular-nums text-primary whitespace-nowrap">
+                        {fmtInt(euroVal)} €
+                      </span>
+                      <span className="text-[9px] tabular-nums text-muted-foreground">
+                        {fmtInt(subData.analysen)} A
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    {subMeta.longDesc}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 mb-1.5">
-                  <span className="text-base font-bold tabular-nums" style={{ color: INTENSITAET_SUB_META[activeSubHebel].color }}>
-                    {fmtDe(benchmark.intensitaet.subHebel[activeSubHebel].kunde)} {INTENSITAET_SUB_META[activeSubHebel].unit}
-                  </span>
-                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-base font-bold tabular-nums text-primary">
-                    {fmtDe(benchmark.intensitaet.subHebel[activeSubHebel].benchmark)} {INTENSITAET_SUB_META[activeSubHebel].unit}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">(Benchmark)</span>
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {INTENSITAET_SUB_META[activeSubHebel].longDesc}
-                </p>
-              </div>
-            )}
+              );
+            })()}
             </div>
+          </div>
 
-            {/* Kennzahlen rechts daneben - Fälle/Analysen oben, Benchmark unten */}
-            <div className="flex-shrink-0 border-l border-border/40 pl-4 flex flex-col">
+          {/* ── Section 4: Grundkennzahlen ───── */}
+          <div className="bg-card border rounded-xl px-5 py-4 flex flex-col min-w-[180px]">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium mb-2">
+              Grundkennzahlen
+            </p>
+            <div className="flex-1 flex flex-col justify-center">
               {/* Fälle + Analysen nebeneinander */}
               <div className="flex gap-4">
                 {/* Fälle Spalte */}
